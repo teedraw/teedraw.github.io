@@ -116,7 +116,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
 <!-- DRAW -->
 <section id="v-draw" class="hidden">
  <div class="card"><h2>Format</h2>
-  <label>Holes</label><div class="seg" id="seg-holes"></div>
+  <label>Holes</label><div class="seg" id="seg-holes"></div><div class="mut" id="nine-hint" style="margin-top:6px"></div>
   <label>Group size</label><div class="seg" id="seg-size"></div>
   <div class="row"><div><label>First tee time</label><input type="time" id="tstart"></div><div><label>Interval (min)</label><input type="number" id="tint" min="0" max="30" inputmode="numeric"></div></div>
   <div class="btns"><button onclick="randomise()">🎲 Randomise</button></div></div>
@@ -217,20 +217,25 @@ function groupSizes(n,pref){ // returns array of group sizes
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function makeGroups(players,pref){const s=shuffle(players),sz=groupSizes(s.length,pref),g=[];let i=0;for(const k of sz){g.push(s.slice(i,i+k));i+=k}return g}
 function addMin(t,m){let[h,mm]=t.split(':').map(Number);let x=h*60+mm+m;x=((x%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')}
-function strokesOn(hcp,si,holes){ // handicap strokes received on hole with stroke index si
-  hcp=Math.round(+hcp||0);if(holes===9){hcp=Math.round(hcp/2);si=Math.ceil(si/2)} const n=holes;
+function strokesOn(hcp,si,holes,nineSi){ // handicap strokes received on hole with stroke index si
+  // 9 holes: playing handicap is halved (rounded) and the hole's SI is ranked WITHIN the nine being played (1-9).
+  // nineSi = the SIs of the nine holes played (front or back). Without it (legacy callers) rank = ceil(si/2), which gives the same answer on the usual odd/even-split cards.
+  hcp=Math.round(+hcp||0);if(holes===9){hcp=Math.round(hcp/2);si=nineSi&&nineSi.length?1+nineSi.filter(x=>x<si).length:Math.ceil(si/2)} const n=holes;
   if(hcp<=0)return 0; return Math.floor(hcp/n)+((si<=hcp%n)?1:0);}
 function stbl(score,par,shots){return score?Math.max(0,2+par+shots-score):0}
 function teamHole(pts,f,k,size){const v=pts.filter(x=>x!=null).sort((a,b)=>b-a);if(!v.length)return null;
   if(f==='avg')return v.reduce((a,b)=>a+b,0)/(size||v.length);const c=f==='best1'?1:f==='best2'?2:Math.max(1,Math.min(3,k||2));return v.slice(0,c).reduce((a,b)=>a+b,0)}
-function skins(P,carry){const n=P.length?P[0].length:0,won=P.map(()=>0),log=[];let pot=0;
+function skins(P,carry,off){off=off||0;const n=P.length?P[0].length:0,won=P.map(()=>0),log=[];let pot=0;
   for(let h=0;h<n;h++){const col=P.map(r=>r[h]);if(col.some(x=>x==null))continue;pot++;const mx=Math.max(...col),w=col.map((x,i)=>x===mx?i:-1).filter(i=>i>=0);
-    if(w.length===1){won[w[0]]+=pot;log.push(`H${h+1}: ${String.fromCharCode(65+w[0])} wins ${pot}`);pot=0}else if(!carry)pot=0}
+    if(w.length===1){won[w[0]]+=pot;log.push(`H${h+1+off}: ${String.fromCharCode(65+w[0])} wins ${pot}`);pot=0}else if(!carry)pot=0}
   return{won,log,carry:carry?pot:0}}
+// 9-hole rounds on an 18-hole card: which nine? 'front' = holes 1-9, 'back' = holes 10-18. A 9-entry (9-hole-only) card has no choice.
+function nineSlice(par,si,n,nine){const a=(n===9&&nine==='back'&&par.length>=18)?9:0,o={par:par.slice(a,a+n),si:si.slice(a,a+n)};if(n===9&&par.length>=18)o.nine=a?'back':'front';return o}
+function nineLabel(n,nine){return n===9?(nine==='back'?'Back 9':nine==='front'?'Front 9':'9 holes'):n+' holes'}
 function twoClubs(groups,scores,par,n){const out=[];groups.forEach((g,gi)=>g.forEach(p=>{const s=scores[p]||[];for(let h=0;h<n;h++)if(s[h]===2)out.push({p,gi,h,par:par[h]})}));return out}
 // live events: per-round and multi-day maths (pure)
 function evRound(c,d){return (d.p||[]).map((p,i)=>{const s=(d.s||{})[p]||[],ch=+((d.h||[])[i])||0;let g=0,net=0,pts=0,th=0,pp=0;
- for(let h=0;h<c.n;h++){const v=+s[h]||0;if(!v)continue;const so=strokesOn(ch,c.si[h],c.n);g+=v;pp+=c.par[h];net+=v-so;pts+=stbl(v,c.par[h],so);th++}
+ for(let h=0;h<c.n;h++){const v=+s[h]||0;if(!v)continue;const so=strokesOn(ch,c.si[h],c.n,c.n===9?c.si:undefined);g+=v;pp+=c.par[h];net+=v-so;pts+=stbl(v,c.par[h],so);th++}
  return{p,ch,g,net,pts,th,pp,n:c.n}})}
 function evBoard(meta,groups,rank){const D=meta.days.length,M={};
  meta.days.forEach((day,di)=>{const gc=day.g==null?999:day.g;Object.keys(groups||{}).forEach(k=>{const[a,b]=k.split(':').map(Number);if(a!==di||b>=gc)return;
@@ -254,7 +259,7 @@ function checkCourse(par,si,n){n=n||par.length;const e=[],pb=[],sb=[];let filled
  return{ok:!e.length,errs:e,pb,sb,out:sum(pa.slice(0,9)),inn:n>9?sum(pa.slice(9,18)):0,tot:sum(pa)}}
 function haversineKm(a,b,c,d){const R=6371,r=x=>x*Math.PI/180,dl=r(c-a),dn=r(d-b),h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
 function nearestCourse(lat,lng,list,maxKm){maxKm=maxKm||15;let best=null;list.forEach((c,i)=>{if(!isFinite(c.lat)||!isFinite(c.lng)||c.lat==null||c.lng==null)return;const d=haversineKm(lat,lng,+c.lat,+c.lng);if(d<=maxKm&&(!best||d<best.km))best={i,c,km:d}});return best}
-if(typeof module!=='undefined')module.exports={normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard};
+if(typeof module!=='undefined')module.exports={normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard,nineSlice,nineLabel};
 </script>
 <script>
 if(typeof document!=='undefined'){
@@ -292,8 +297,8 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 // hash import
 function enc(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))))}
-function link(){return location.href.split('#')[0]+'#d='+enc({g:S.groups,h:S.holes,t:S.tstart,i:S.tint,c:S.course.name,p:S.course.par,s:S.course.si,m:S.course.m,e:S.course.tee,te:S.course.tees})}
-function loadHash(){const m=location.hash.match(/#d=([^&]+)/);if(!m)return;try{const d=dec(m[1]);S.groups=d.g;S.holes=d.h;S.tstart=d.t;S.tint=d.i;S.players=d.g.flat();if(d.p){S.course={name:d.c,par:d.p,si:d.s,m:d.m,tee:d.e,tees:d.te};if(!S.courses.some(c=>c.name===d.c))S.courses.push(JSON.parse(JSON.stringify(S.course)))}S.scores={};S.tab='draw';save();toast('Draw loaded from link');S._fromLink=1}catch(e){toast('Could not read shared link')}}
+function link(){return location.href.split('#')[0]+'#d='+enc({g:S.groups,h:S.holes,nn:isBack()?'back':undefined,t:S.tstart,i:S.tint,c:S.course.name,p:S.course.par,s:S.course.si,m:S.course.m,e:S.course.tee,te:S.course.tees})}
+function loadHash(){const m=location.hash.match(/#d=([^&]+)/);if(!m)return;try{const d=dec(m[1]);S.groups=d.g;S.holes=d.h;S.nine=d.nn==='back'?'back':'front';S.tstart=d.t;S.tint=d.i;S.players=d.g.flat();if(d.p){S.course={name:d.c,par:d.p,si:d.s,m:d.m,tee:d.e,tees:d.te};if(!S.courses.some(c=>c.name===d.c))S.courses.push(JSON.parse(JSON.stringify(S.course)))}S.scores={};S.tab='draw';save();toast('Draw loaded from link');S._fromLink=1}catch(e){toast('Could not read shared link')}}
 loadHash();
 track('app_opened',{via:S._fromLink?'shared_link':'direct',holes:S.holes});if(S._fromLink){track('shared_link_opened',{groups:S.groups.length,holes:S.holes});delete S._fromLink}
 // players
@@ -337,8 +342,24 @@ function renderPlayers(){renderRoster();const G=S.players.map((p,i)=>[p,i]).filt
  $('chips').innerHTML=G.map(([p,i])=>`<span class="chip"><b>${esc(p)}</b><button class="sv" aria-label="Save ${esc(p)} to my players" onclick="saveGuest(${i})">💾 Save</button><button aria-label="remove" onclick="rmP(${i})">×</button></span>`).join('')+(G.length>1?`<button class="sec sm" onclick="saveAllGuests()">Save all to my players</button>`:'')||'<span class="mut">None – tick saved players above, or add one-off names here.</span>'}
 // draw
 function seg(id,opts,cur,fn){$(id).innerHTML=opts.map(([v,l])=>`<button class="${v==cur?'on':''}" data-v="${v}">${l}</button>`).join('');$(id).onclick=e=>{const b=e.target.closest('button');if(b){fn(b.dataset.v);}}}
+// ---- 9 holes: front or back nine ----
+function nineSel(){return S.course.par.length>=18} // card has both nines -> organiser can choose
+function isBack(){return S.holes===9&&(S.course.par.length>=18?S.nine==='back':S.course.half==='back')}
+function lo(){return isBack()?9:0} // hole-number offset shown to people (Back 9 = holes 10-18)
+function ao(){return isBack()&&S.course.par.length>=18?9:0} // offset into the course's 18-entry par/si/metres arrays
+function nineName(){if(S.holes!==9)return'';if(S.course.par.length>=18)return S.nine==='back'?'Back 9':'Front 9';return S.course.half==='back'?'Back 9':S.course.half==='front'?'Front 9':''}
+function nameTag(){const n=nineName();return n?' · '+n:''}
+function hasScores(){return S.groups.flat().some(p=>(S.scores[p]||[]).some(Boolean))}
+function dayC(c,n,nine){const f=cfix(c,n),z=nineSlice(f.par,f.si,n,nine),o={name:c.name,par:z.par,si:z.si,n};if(z.nine)o.nine=z.nine;if(c.tees&&c.tees.length)o.tees=c.tees.slice(0,4).map(t=>({name:t.name,color:t.color,cr:t.cr,sr:t.sr}));return o}
+function setHoles(v){const ns=nineSel(),h=v==='f'||v==='b'?9:+v,nn=v==='b'?'back':v==='f'?'front':S.nine,nl=h===9&&ns&&nn==='back'?9:0;
+ if(h===S.holes&&nl===lo())return;
+ if(nl!==lo()&&hasScores()){if(!confirm('Changing the nine (or switching to/from 18) clears the scores entered so far. Continue?'))return;S.scores={};S.started=S.finished=false;S.evLS={}}
+ S.holes=h;if(h===9&&ns)S.nine=nn;S.ch=Math.min(S.ch,S.holes-1);
+ const E=S.ev;if(E&&E.role==='org'){const d=E.days[E.d];if(d&&d.c.name===S.course.name){const z=dayC(S.course,S.holes,S.nine);d.c.par=z.par;d.c.si=z.si;d.c.n=z.n;if(z.nine)d.c.nine=z.nine;else delete d.c.nine}}
+ save();renderDraw()}
 function renderDraw(){
- seg('seg-holes',[[9,'9 holes'],[18,'18 holes']],S.holes,v=>{S.holes=+v;S.ch=Math.min(S.ch,S.holes-1);save();renderDraw()});
+ const ns=nineSel();seg('seg-holes',ns?[[18,'18 holes'],['f','Front 9'],['b','Back 9']]:[[18,'18 holes'],[9,'9 holes']],S.holes===18?18:ns?(isBack()?'b':'f'):9,setHoles);
+ $('nine-hint').textContent=S.holes!==9?'':ns?(isBack()?'Back 9 = holes 10–18 of ':'Front 9 = holes 1–9 of ')+S.course.name+'. Handicap is halved and stroke index is ranked within the nine.':'9-hole card: holes 1–9.';
  seg('seg-size',[['auto','Auto'],[4,'4-ball'],[3,'3-ball'],[2,'2-ball']],S.size,v=>{S.size=v;save();renderDraw()});
  $('tstart').value=S.tstart;$('tint').value=S.tint;
  $('groups').innerHTML=S.groups.map((g,i)=>`<div class="card grp"><h3><span>Group ${i+1}</span><span>⛳ ${addMin(S.tstart,i*S.tint)}</span></h3><ol>${g.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`).join('');
@@ -348,25 +369,27 @@ $('tstart').onchange=e=>{S.tstart=e.target.value||'07:30';save();renderDraw()};$
 window.randomise=()=>{const P=pool();if(P.length<2){toast('Tick or add at least 2 players');setTab('players');return}
  if(S.groups.length&&Object.keys(S.scores).length&&!confirm('Reshuffle clears scores. Continue?'))return;
  S.groups=makeGroups(P,S.size);S.hi=S.hi||{};P.forEach(p=>{const r=R.find(r=>r.n===p);if(r&&r.hi!==''&&r.hi!=null&&(S.hi[p]==null||S.hi[p]===''))S.hi[p]=r.hi});if(typeof recalcCH==='function')recalcCH();S.scores={};S.started=S.finished=false;track('draw_made',{players:P.length,groups:S.groups.length,holes:S.holes,size:String(S.size)});S.cg=0;S.ch=0;save();renderDraw();history.replaceState(null,'',link())};
-function drawText(){return `⛳ *TeeDraw – ${S.course.name}* (${S.holes} holes)\n\n`+S.groups.map((g,i)=>`*Group ${i+1}* – ${addMin(S.tstart,i*S.tint)}\n`+g.map(p=>'• '+p).join('\n')).join('\n\n')+`\n\nOpen the draw & scorecard:\n${link()}`}
+function drawText(){return `⛳ *TeeDraw – ${S.course.name}* (${S.holes===9?(nineName()||'9 holes'):S.holes+' holes'})\n\n`+S.groups.map((g,i)=>`*Group ${i+1}* – ${addMin(S.tstart,i*S.tint)}\n`+g.map(p=>'• '+p).join('\n')).join('\n\n')+`\n\nOpen the draw & scorecard:\n${link()}`}
 function wa(t){window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
 window.shareDraw=()=>{track('draw_shared',{groups:S.groups.length,holes:S.holes});wa(drawText())};
 window.copyLink=()=>{navigator.clipboard?.writeText(link()).then(()=>toast('Link copied'),()=>prompt('Copy link',link()))};
 // course
-function cpar(){const p=S.course.par;if(p.length<S.holes){S.course.par=p.concat(p).slice(0,18);S.course.si=S.course.si.concat(S.course.si.map(x=>x*2)).map((x,i)=>i<9?x*2-1:x).slice(0,18);if(S.course.m)S.course.m=S.course.m.concat(S.course.m)}return S.course.par.slice(0,S.holes)}
+function cpar(){const p=S.course.par;if(p.length<S.holes){S.course.par=p.concat(p).slice(0,18);S.course.si=S.course.si.concat(S.course.si.map(x=>x*2)).map((x,i)=>i<9?x*2-1:x).slice(0,18);if(S.course.m)S.course.m=S.course.m.concat(S.course.m)}const a=ao();return S.course.par.slice(a,a+S.holes)}
+function csi(){cpar();const a=ao();return S.course.si.slice(a,a+S.holes)} // stroke indexes of the holes being played
+function shots(p,h,si){si=si||csi();return strokesOn(S.hcp[p],si[h],S.holes,S.holes===9?si:undefined)} // handicap shots for player p on played-hole h (0-based within the round)
 function renderCourse(){
  $('courseSel').innerHTML=S.courses.map((c,i)=>`<option value="${i}" ${c.name===S.course.name?'selected':''}>${esc(c.name)}${c.src==='community'||c.cid?' · Community':''}</option>`).join('')+(S.courses.some(c=>c.name===S.course.name)?'':`<option selected>${esc(S.course.name)} (unsaved)</option>`);
  $('cname').value=S.course.name;
- const f=(k,id,mx)=>{$(id).innerHTML=S.course[k].slice(0,S.holes).map((v,i)=>`<input inputmode="numeric" value="${v}" aria-label="${k} ${i+1}" data-i="${i}" data-k="${k}" title="Hole ${i+1}">`).join('');};
+ cpar();const A=ao(),LO=lo();const f=(k,id,mx)=>{$(id).innerHTML=S.course[k].slice(A,A+S.holes).map((v,i)=>`<input inputmode="numeric" value="${v}" aria-label="${k} ${i+1+LO}" data-i="${A+i}" data-k="${k}" title="Hole ${i+1+LO}">`).join('');};
  f('par','pars');f('si','sis');
- const p=cpar(),o=p.slice(0,9).reduce((a,b)=>a+b,0);$('partot').textContent=`Par ${p.reduce((a,b)=>a+b,0)}`+(S.holes===18?` (Out ${o} · In ${p.slice(9).reduce((a,b)=>a+b,0)})`:'');
+ const p=cpar(),o=p.slice(0,9).reduce((a,b)=>a+b,0);$('partot').textContent=`Par ${p.reduce((a,b)=>a+b,0)}`+(S.holes===18?` (Out ${o} · In ${p.slice(9).reduce((a,b)=>a+b,0)})`:nineName()?` (${nineName()}, holes ${1+LO}–${9+LO})`:'');
 }
 document.addEventListener('change',e=>{const k=e.target.dataset?.k;if(!k)return;const v=parseInt(e.target.value);if(v>0&&v<=(k==='par'?7:18)){S.course[k][+e.target.dataset.i]=v;save();renderScore()}else e.target.value=S.course[k][+e.target.dataset.i]});
 window.pickCourse=()=>{const c=S.courses[+$('courseSel').value];if(c){S.course=JSON.parse(JSON.stringify(c));save();renderScore()}};
-window.saveCourse=()=>{const i=S.courses.findIndex(c=>c.name===S.course.name);const c=JSON.parse(JSON.stringify(S.course));if(i>=0)S.courses[i]=c;else S.courses.push(c);save();renderCourse();toast('Course saved')};
+window.saveCourse=()=>{const i=S.courses.findIndex(c=>c.name===S.course.name);const c=JSON.parse(JSON.stringify(S.course));delete c.half;if(i>=0)S.courses[i]=c;else S.courses.push(c);save();renderCourse();toast('Course saved')};
 // scoring
 const sc=(p)=>S.scores[p]||(S.scores[p]=[]);
-function tot(p){const s=sc(p),par=cpar();let g=0,pp=0,net=0,th=0,pts=0;for(let h=0;h<S.holes;h++){if(s[h]){g+=s[h];pp+=par[h];const so=strokesOn(S.hcp[p],S.course.si[h],S.holes);net+=s[h]-so;pts+=stbl(s[h],par[h],so);th++}}return{g,pp,net,th,pts,to:g-pp,nto:net-pp}}
+function tot(p){const s=sc(p),par=cpar(),si=csi();let g=0,pp=0,net=0,th=0,pts=0;for(let h=0;h<S.holes;h++){if(s[h]){g+=s[h];pp+=par[h];const so=shots(p,h,si);net+=s[h]-so;pts+=stbl(s[h],par[h],so);th++}}return{g,pp,net,th,pts,to:g-pp,nto:net-pp}}
 const rel=v=>v===0?'E':(v>0?'+'+v:''+v),cls=v=>v<0?'under':v>0?'over':'';
 window.go=d=>{S.ch=(S.ch+d+S.holes)%S.holes;save();renderScore()};
 window.hole=h=>{S.ch=h;save();renderScore()};
@@ -376,14 +399,14 @@ window.setH=(p,v)=>{S.hcp[p]=Math.max(0,Math.min(54,+v||0));save();renderScore()
 function renderScore(){
  renderCourse();
  if(!S.groups.length){$('prows').innerHTML='<p class="mut">Randomise a draw first.</p>';$('gsel').innerHTML='';$('gcard').innerHTML='';$('dots').innerHTML='';$('hcps').innerHTML='';return}
- S.cg=Math.min(S.cg,S.groups.length-1);const g=S.groups[S.cg],par=cpar();
+ S.cg=Math.min(S.cg,S.groups.length-1);const g=S.groups[S.cg],par=cpar(),si=csi(),LO=lo();
  $('gsel').innerHTML=S.groups.map((x,i)=>`<option value="${i}" ${i===S.cg?'selected':''}>Group ${i+1}</option>`).join('');
- $('dots').innerHTML=par.map((_,h)=>`<button class="${h===S.ch?'on':''} ${g.every(p=>sc(p)[h])?'done':''}" onclick="hole(${h})">${h+1}</button>`).join('');
- $('hn').textContent='Hole '+(S.ch+1);$('hinfo').textContent=`Par ${par[S.ch]} · SI ${S.course.si[S.ch]}`;
- $('prows').innerHTML=g.map((p,i)=>{const v=sc(p)[S.ch],t=tot(p),so=strokesOn(S.hcp[p],S.course.si[S.ch],S.holes);return `<div class="prow"><div class="nm">${esc(p)}${so?' '+'•'.repeat(so):''}<small>${t.g?`${t.g} (${rel(t.to)}) thru ${t.th}`:'–'}${S.hcp[p]?` · net ${rel(t.nto)}`:''}</small></div><div class="stp"><button class="sec" onclick="st(${i},-1)">−</button><div class="v ${v?cls(v-par[S.ch]):''}" ondblclick="clr(${i})">${v||'·'}</div><button onclick="st(${i},1)">+</button></div></div>`}).join('');
+ $('dots').innerHTML=par.map((_,h)=>`<button class="${h===S.ch?'on':''} ${g.every(p=>sc(p)[h])?'done':''}" onclick="hole(${h})">${h+1+LO}</button>`).join('');
+ $('hn').textContent='Hole '+(S.ch+1+LO);$('hinfo').textContent=`Par ${par[S.ch]} · SI ${si[S.ch]}`+nameTag();
+ $('prows').innerHTML=g.map((p,i)=>{const v=sc(p)[S.ch],t=tot(p),so=shots(p,S.ch,si);return `<div class="prow"><div class="nm">${esc(p)}${so?' '+'•'.repeat(so):''}<small>${t.g?`${t.g} (${rel(t.to)}) thru ${t.th}`:'–'}${S.hcp[p]?` · net ${rel(t.nto)}`:''}</small></div><div class="stp"><button class="sec" onclick="st(${i},-1)">−</button><div class="v ${v?cls(v-par[S.ch]):''}" ondblclick="clr(${i})">${v||'·'}</div><button onclick="st(${i},1)">+</button></div></div>`}).join('');
  $('hcps').innerHTML=g.map(p=>`<div class="row" style="margin-top:6px"><span>${esc(p)}</span><input type="number" inputmode="numeric" min="0" max="54" value="${S.hcp[p]||0}" onchange="setH('${esc(p).replace(/'/g,"\\'")}',this.value)" style="flex:0 0 80px"></div>`).join('');
  const hs=[...Array(S.holes).keys()];
- $('gcard').innerHTML=`<table><tr><th>Hole</th>${hs.map(h=>`<th>${h+1}</th>`).join('')}<th>Tot</th><th>Net</th></tr><tr><th>Par</th>${hs.map(h=>`<th>${par[h]}</th>`).join('')}<th>${par.reduce((a,b)=>a+b,0)}</th><th></th></tr>${g.map(p=>{const t=tot(p);return `<tr><td style="text-align:left;white-space:nowrap">${esc(p)}</td>${hs.map(h=>{const v=sc(p)[h];return `<td class="${v?cls(v-par[h]):''}">${v||''}</td>`}).join('')}<td><b>${t.g||''}</b></td><td>${t.th?t.net:''}</td></tr>`}).join('')}</table>`;
+ $('gcard').innerHTML=`<table><tr><th>Hole</th>${hs.map(h=>`<th>${h+1+LO}</th>`).join('')}<th>Tot</th><th>Net</th></tr><tr><th>Par</th>${hs.map(h=>`<th>${par[h]}</th>`).join('')}<th>${par.reduce((a,b)=>a+b,0)}</th><th></th></tr>${g.map(p=>{const t=tot(p);return `<tr><td style="text-align:left;white-space:nowrap">${esc(p)}</td>${hs.map(h=>{const v=sc(p)[h];return `<td class="${v?cls(v-par[h]):''}">${v||''}</td>`}).join('')}<td><b>${t.g||''}</b></td><td>${t.th?t.net:''}</td></tr>`}).join('')}</table>`;
 }
 // leaderboard
 function board(){const m=S.lbm;return S.groups.flatMap((g,gi)=>g.map(p=>({p,gi,...tot(p)}))).filter(r=>r.th).sort((a,b)=>(m==='pts'?b.pts-a.pts:m==='net'?a.nto-b.nto:a.to-b.to)||b.th-a.th)}
@@ -395,8 +418,8 @@ function renderBoard(){if(S.lbm==='team'){seg('seg-lb',[['gross','Gross'],['net'
  const b=board();let pos=0,last=null;
  $('lb').innerHTML='<tr><th>#</th><th style="text-align:left">Player</th><th>Thru</th><th>'+(S.lbm==='pts'?'Gross':S.lbm==='net'?'Nett':'Gross')+'</th><th>'+(S.lbm==='pts'?'Pts':'To par')+'</th></tr>'+(b.map((r,i)=>{const k=S.lbm==='pts'?r.pts:S.lbm==='net'?r.nto:r.to;if(k!==last){pos=i+1;last=k}return `<tr><td>${pos}</td><td>${esc(r.p)} <span class="mut">G${r.gi+1}</span></td><td>${r.th===S.holes?'F':r.th}</td><td>${S.lbm==='net'?r.net:r.g}</td><td class="${S.lbm==='pts'?'':cls(k)}"><b>${S.lbm==='pts'?k:rel(k)}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="mut">No scores yet.</td></tr>')}
 window.shareBoard=()=>{track('leaderboard_shared',{mode:S.lbm,holes:S.holes});
- const inc=$('incx').checked,TC=inc?twoList():[],tct=TC.length?`\n\n*Two Clubs* (pot R${+S.twoPot||0}${S.twoPot?`, R${Math.round(S.twoPot/TC.length*100)/100} each`:''})\n`+TC.map(t=>`${t.p} – hole ${t.h+1}`).join('\n'):'',X=inc?extras():[],xs=X.filter(x=>x.sk||x.u||x.f||x.t),xt=xs.length?'\n\n*Skins · Units · Fines*\n'+xs.map(x=>`${x.p}: ${x.sk} skins${x.u?`, ${x.u} units`:''}${x.f?`, R${x.f} fines`:''}${x.t?` – ${x.t}`:''}`).join('\n')+`\nTotal: ${X.reduce((a,x)=>a+x.sk,0)} skins · ${X.reduce((a,x)=>a+x.u,0)} units · R${X.reduce((a,x)=>a+x.f,0)} fines`:'';
- if(S.lbm==='team'){wa(`🏆 *TeeDraw team leaderboard – ${S.course.name}*\n\n`+teamBoard().map((r,k)=>`${k+1}. Group ${r.i+1} (${r.g.join(', ')}) – ${r1(r.tot)} pts [${fmtLabel(r.o)}, ${r.thru===S.holes?'F':'thru '+r.thru}]`).join('\n')+xt+tct+'\n\nMade with TeeDraw');return}const b=board();wa(`🏆 *TeeDraw leaderboard – ${S.course.name}* (${S.lbm==='pts'?'Stableford':S.lbm==='net'?'nett':'gross'})\n\n`+b.map((r,i)=>`${i+1}. ${r.p} – ${S.lbm==='pts'?r.pts+' pts':rel(S.lbm==='net'?r.nto:r.to)} (${S.lbm==='net'?r.net:r.g}, ${r.th===S.holes?'F':'thru '+r.th})`).join('\n')+xt+tct+'\n\nMade with TeeDraw')};
+ const inc=$('incx').checked,TC=inc?twoList():[],tct=TC.length?`\n\n*Two Clubs* (pot R${+S.twoPot||0}${S.twoPot?`, R${Math.round(S.twoPot/TC.length*100)/100} each`:''})\n`+TC.map(t=>`${t.p} – hole ${t.h+1+lo()}`).join('\n'):'',X=inc?extras():[],xs=X.filter(x=>x.sk||x.u||x.f||x.t),xt=xs.length?'\n\n*Skins · Units · Fines*\n'+xs.map(x=>`${x.p}: ${x.sk} skins${x.u?`, ${x.u} units`:''}${x.f?`, R${x.f} fines`:''}${x.t?` – ${x.t}`:''}`).join('\n')+`\nTotal: ${X.reduce((a,x)=>a+x.sk,0)} skins · ${X.reduce((a,x)=>a+x.u,0)} units · R${X.reduce((a,x)=>a+x.f,0)} fines`:'';
+ if(S.lbm==='team'){wa(`🏆 *TeeDraw team leaderboard – ${S.course.name}${nameTag()}*\n\n`+teamBoard().map((r,k)=>`${k+1}. Group ${r.i+1} (${r.g.join(', ')}) – ${r1(r.tot)} pts [${fmtLabel(r.o)}, ${r.thru===S.holes?'F':'thru '+r.thru}]`).join('\n')+xt+tct+'\n\nMade with TeeDraw');return}const b=board();wa(`🏆 *TeeDraw leaderboard – ${S.course.name}${nameTag()}* (${S.lbm==='pts'?'Stableford':S.lbm==='net'?'nett':'gross'})\n\n`+b.map((r,i)=>`${i+1}. ${r.p} – ${S.lbm==='pts'?r.pts+' pts':rel(S.lbm==='net'?r.nto:r.to)} (${S.lbm==='net'?r.net:r.g}, ${r.th===S.holes?'F':'thru '+r.th})`).join('\n')+xt+tct+'\n\nMade with TeeDraw')};
 window.proInfo=()=>alert('TeeDraw Pro is coming soon: cloud-saved courses, season leaderboards, Stableford, club branding and no ads.');
 // tabs
 let taps=0,tt;window.logoTap=()=>{taps++;clearTimeout(tt);tt=setTimeout(()=>taps=0,1500);if(taps>=5){taps=0;setTab('stats')}};
@@ -415,14 +438,14 @@ window.setCH=(pi,v)=>{setH(S.groups[S.cg][pi],v);renderCard()};
 window.cycTee=pi=>{const p=S.groups[S.cg][pi];S.ptee=S.ptee||{};S.ptee[p]=(((S.ptee[p]||0)+1)%tees().length);if(S.whs&&(S.hi||{})[p]!=null&&S.hi[p]!=='')S.hcp[p]=chFrom(S.hi[p],ptee(p));save();renderCard()};
 const gfmt=()=>{S.tf=S.tf||{};return S.tf[S.cg]||{f:'best2',k:2}};
 window.setFmt=(f,k)=>{const o=gfmt();S.tf[S.cg]={f:f||o.f,k:k||o.k};save();renderCard();renderBoardIfOpen()};
-function ptsGrid(g){const par=cpar();return g.map(p=>{const s=sc(p);return [...Array(S.holes).keys()].map(h=>s[h]?stbl(s[h],par[h],strokesOn(S.hcp[p],S.course.si[h],S.holes)):null)})}
+function ptsGrid(g){const par=cpar(),si=csi();return g.map(p=>{const s=sc(p);return [...Array(S.holes).keys()].map(h=>s[h]?stbl(s[h],par[h],shots(p,h,si)):null)})}
 function groupTeam(gi){const g=S.groups[gi],P=ptsGrid(g),o=(S.tf||{})[gi]||{f:'best2',k:2};const per=[...Array(S.holes).keys()].map(h=>teamHole(P.map(r=>r[h]),o.f,o.k,g.length));return{per,o,tot:per.reduce((a,b)=>a+(b||0),0),thru:per.filter(v=>v!=null).length}}
 const fmtLabel=o=>({best2:'B/B (best 2)',best1:'Better ball',alliance:'Alliance ('+o.k+' count)',avg:'Group average'})[o.f];
 const r1=v=>v==null?'':(Math.round(v*10)/10);
 function renderCard(){
- const par=cpar(),si=S.course.si,n=S.holes,hs=[...Array(n).keys()],T=tees();
+ const par=cpar(),si=csi(),n=S.holes,hs=[...Array(n).keys()],T=tees(),LO=lo(),AO=ao();
  $('ccsel').innerHTML=S.courses.map((c,i)=>`<option value="${i}" ${c.name===S.course.name?'selected':''}>${esc(c.name)}</option>`).join('');
- $('cclub').textContent=S.course.name;$('cdate').value=S.date;$('ccomp').value=S.comp||'';$('shade').checked=S.shade;$('whs').checked=!!S.whs;$('carry').checked=S.carry!==false;
+ $('cclub').textContent=S.course.name+nameTag();$('cdate').value=S.date;$('ccomp').value=S.comp||'';$('shade').checked=S.shade;$('whs').checked=!!S.whs;$('carry').checked=S.carry!==false;
  $('crsr').innerHTML=`<tr><th></th>${T.map(t=>`<th style="background:${t.color};color:${t.color==='#fff'?'#123':'#fff'}">${esc(t.name.toUpperCase())}</th>`).join('')}</tr><tr><th>CR</th>${T.map(t=>`<td>${t.cr??'–'}</td>`).join('')}</tr><tr><th>SR</th>${T.map(t=>`<td>${t.sr??'–'}</td>`).join('')}</tr>`;
  if(!S.groups.length){$('cgsel').innerHTML='';$('mh').innerHTML='';$('notes').innerHTML='';$('sc').innerHTML='<p class="mut" style="padding:10px">Randomise a draw first.</p>';return}
  S.cg=Math.min(S.cg,S.groups.length-1);const g=S.groups[S.cg],o=gfmt();
@@ -438,13 +461,13 @@ function renderCard(){
  const y=c=>typeof c==='number'&&par[c]===3?' y':'';
  // row(labelHTML, cellFn(h), sumFn(rangeKey|'tot'), extraCells, cls)
  const row=(lab,fn,sm,ex,cls='')=>`<tr class="${cls}"><th class="lab">${lab}</th>${cols.map(c=>typeof c==='number'?fn(c,y(c)):`<td class="sum">${sm?sm(c):''}</td>`).join('')}<td class="sum">${sm?sm('tot'):''}</td>${ex||'<td class="sum g"></td><td class="sum g"></td>'}</tr>`;
- let h=`<tr class="rh"><th class="lab">HOLE</th>${cols.map(c=>`<td class="${y(c)}">${typeof c==='number'?c+1:c.toUpperCase()}</td>`).join('')}<td>${nine?'TOTAL':'TOTAL'}</td><td>GROSS</td><td>NETT</td></tr>`;
- T.forEach(t=>{if((t.m||[]).some(Boolean))h+=row(`<span class="dl" style="background:${t.color};color:${t.color==='#fff'?'#123':'#fff'}">${esc(t.name.toUpperCase())}</span>`,(c,k)=>`<td class="rd${k}">${t.m[c]||''}</td>`,c=>{const[a,b]=rng(c);return sum(t.m,a,b)||''},null,'rd')});
+ let h=`<tr class="rh"><th class="lab">HOLE</th>${cols.map(c=>`<td class="${y(c)}">${typeof c==='number'?c+1+LO:c.toUpperCase()}</td>`).join('')}<td>${nine?'TOTAL':'TOTAL'}</td><td>GROSS</td><td>NETT</td></tr>`;
+ T.forEach(t=>{if((t.m||[]).some(Boolean))h+=row(`<span class="dl" style="background:${t.color};color:${t.color==='#fff'?'#123':'#fff'}">${esc(t.name.toUpperCase())}</span>`,(c,k)=>`<td class="rd${k}">${(t.m||[])[c+AO]||''}</td>`,c=>{const[a,b]=rng(c);return sum((t.m||[]).slice(AO),a,b)||''},null,'rd')});
  h+=row('PAR',(c,k)=>`<td class="rp${k}">${par[c]}</td>`,c=>{const[a,b]=rng(c);return sum(par,a,b)},null,'rp');
  h+=row('STROKE',(c,k)=>`<td class="rs${k}">${si[c]}</td>`,null,null,'rs');
  const P=ptsGrid(g);
  const prow2=(p,pi)=>{const s=sc(p),t=tot(p),L=LET[pi];
-  let r=row(`<span class="pl1">${L}</span>SCORE <small>${esc(p.split(' ')[0]).slice(0,9)}</small>`,(c,k)=>{const v=s[c],d=v?v-par[c]:null,cl=!S.shade||!v?'':d<=-2?'eg':d===-1?'bi':d===0?'pa':d===1?'bo':'db',so=strokesOn(S.hcp[p],si[c],n);
+  let r=row(`<span class="pl1">${L}</span>SCORE <small>${esc(p.split(' ')[0]).slice(0,9)}</small>`,(c,k)=>{const v=s[c],d=v?v-par[c]:null,cl=!S.shade||!v?'':d<=-2?'eg':d===-1?'bi':d===0?'pa':d===1?'bo':'db',so=strokesOn(S.hcp[p],si[c],n,n===9?si:undefined);
    return `<td class="cell${k} ${cl} ${padP===pi&&padH===c?'sel':''}" onclick="openPad(${pi},${c})">${so?`<i>${'•'.repeat(so)}</i>`:''}${v||''}</td>`},c=>{const[a,b]=rng(c);return sum(s,a,b)||''},`<td class="sum g"><b>${t.g||''}</b></td><td class="sum g"><b>${t.th?t.net:''}</b></td>`,'ps');
   r+=row(`<span class="pl1"></span>RESULT`,(c,k)=>`<td class="res${k}">${P[pi][c]??''}</td>`,c=>{const[a,b]=rng(c);return sum(P[pi],a,b)||''},`<td class="sum g" colspan="2">${t.th?t.pts+' pts':''}</td>`,'pr');return r};
  const team=(lab,idx,f,k)=>{const per=hs.map(hh=>teamHole(idx.map(i=>P[i][hh]),f,k,idx.length));return row(lab,(c,kk)=>`<td class="tm${kk}">${r1(per[c])}</td>`,c=>{const[a,b]=rng(c);return r1(per.slice(a,b).reduce((x,v)=>x+(v||0),0))||''},null,'tr')};
@@ -460,7 +483,7 @@ function twoList(){return twoClubs(S.groups,S.scores,cpar(),S.holes)}
 function renderNPanel(g,P){const sk=skins(P,S.carry!==false),tc=twoList(),pot=+S.twoPot||0,each=tc.length?Math.round(pot/tc.length*100)/100:0;
  $('npanel').innerHTML='<h4>Notes</h4>'+g.map((p,i)=>{const q=nt(p),x=[sk.won[i]+(+q.skins||0)?`${sk.won[i]+(+q.skins||0)} skins`:'',q.units?`${q.units} units`:'',q.fines?`R${q.fines} fines`:''].filter(Boolean).join(' · ');
   return `<div class="nl"><b>Player ${LET[i]} -</b><span class="x">${esc(p)}${x?' · '+x:''}</span><input value="${esc(q.text||'')}" placeholder="note" onchange="nSet(${i},'text',this.value)"></div>`}).join('')
- +`<div class="nl"><b>Two Clubs -</b><span class="x">${tc.length?tc.map(t=>`${esc(t.p)} (H${t.h+1}${t.par===3?'':', par '+t.par})`).join(', '):'none yet'}</span><span style="margin-left:auto" class="x">Pot R</span><input style="width:64px;flex:0 0 64px" inputmode="decimal" value="${S.twoPot||''}" placeholder="0" onchange="S.twoPot=Math.max(0,+this.value||0);save();renderCard()"></div>`
+ +`<div class="nl"><b>Two Clubs -</b><span class="x">${tc.length?tc.map(t=>`${esc(t.p)} (H${t.h+1+lo()}${t.par===3?'':', par '+t.par})`).join(', '):'none yet'}</span><span style="margin-left:auto" class="x">Pot R</span><input style="width:64px;flex:0 0 64px" inputmode="decimal" value="${S.twoPot||''}" placeholder="0" onchange="S.twoPot=Math.max(0,+this.value||0);save();renderCard()"></div>`
  +(tc.length&&pot?`<div class="nl x">Split: R${each} per two (${tc.length})</div>`:'')}
 // signatures (optional, stored per group on this phone only)
 function sigCanvas(id,k){const c=$(id),x=c.getContext('2d');let d=false;x.lineWidth=2.2;x.lineCap='round';x.strokeStyle='#123';
@@ -475,13 +498,13 @@ function renderBoardIfOpen(){if(S.tab==='board')renderBoard()}
 const nt=p=>{S.notes=S.notes||{};return S.notes[p]||(S.notes[p]={units:0,fines:0,skins:0,text:''})};
 window.nAdj=(pi,k,d)=>{const q=nt(S.groups[S.cg][pi]);q[k]=Math.max(0,(+q[k]||0)+d);save();renderCard()};
 window.nSet=(pi,k,v)=>{const q=nt(S.groups[S.cg][pi]);q[k]=k==='text'?v.slice(0,200):Math.max(0,+v||0);save();renderCard()};
-function renderNotes(g,P){const sk=skins(P,S.carry!==false);const tot={units:0,fines:0,skins:0,auto:0};
+function renderNotes(g,P){const sk=skins(P,S.carry!==false,lo());const tot={units:0,fines:0,skins:0,auto:0};
  const rows=g.map((p,i)=>{const q=nt(p);tot.units+=+q.units;tot.fines+=+q.fines;tot.skins+=+q.skins;tot.auto+=sk.won[i];
   const ctr=(k,l)=>`<div class="ctr"><span>${l}</span><button class="sec" onclick="nAdj(${i},'${k}',-1)">−</button><b>${q[k]}</b><button class="sec" onclick="nAdj(${i},'${k}',1)">+</button></div>`;
   return `<div class="note"><div class="row"><b>${LET[i]} · ${esc(p)}</b><span class="mut" style="text-align:right">🏅 Skins won: <b>${sk.won[i]}</b></span></div><div class="ctrs">${ctr('units','Units')}${ctr('skins','Manual skins')}<div class="ctr"><span>Fines R</span><input inputmode="decimal" value="${q.fines||''}" placeholder="0" onchange="nSet(${i},'fines',this.value)"></div></div><input placeholder="Note (e.g. lost ball on 7, beers)" value="${esc(q.text||'')}" onchange="nSet(${i},'text',this.value)"></div>`}).join('');
  $('notes').innerHTML=rows+`<div class="note" style="background:#eef5ea"><b>Group ${S.cg+1} totals</b> · Units ${tot.units} · Fines R${tot.fines} · Skins won ${tot.auto}${tot.skins?` (+${tot.skins} manual)`:''}${sk.carry?` · <span class="mut">${sk.carry} skin(s) still carrying</span>`:''}<div class="mut" style="margin-top:4px">${sk.log.join(' · ')||'No skins decided yet.'}</div></div>`}
 window.openPad=(pi,h)=>{padP=pi;padH=h;const p=S.groups[S.cg][pi],par=cpar()[h];
- $('pad').innerHTML=`<div class="row"><b style="flex:2">${esc(p)} · Hole ${h+1} <span class="mut">Par ${par}</span></b><button class="sec sm" style="flex:0" onclick="closePad()">Done</button></div><div class="pg">${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button class="${v===par?'':'sec'}" onclick="padSet(${v})">${v}</button>`).join('')}<button class="sec" onclick="padSet(+prompt('Strokes (10+)',11)||null)">10+</button><button class="sec" onclick="padSet(null)">Clear</button><button class="sec" onclick="padMove(-1)">◀</button><button class="sec" onclick="padMove(1)" style="grid-column:span 2">Next ▶</button></div>`;
+ $('pad').innerHTML=`<div class="row"><b style="flex:2">${esc(p)} · Hole ${h+1+lo()} <span class="mut">Par ${par}</span></b><button class="sec sm" style="flex:0" onclick="closePad()">Done</button></div><div class="pg">${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button class="${v===par?'':'sec'}" onclick="padSet(${v})">${v}</button>`).join('')}<button class="sec" onclick="padSet(+prompt('Strokes (10+)',11)||null)">10+</button><button class="sec" onclick="padSet(null)">Clear</button><button class="sec" onclick="padMove(-1)">◀</button><button class="sec" onclick="padMove(1)" style="grid-column:span 2">Next ▶</button></div>`;
  $('pad').classList.remove('hidden');renderCard()};
 window.padSet=v=>{const p=S.groups[S.cg][padP];sc(p)[padH]=v&&v>0?Math.min(v,20):null;save();padMove(1)};
 window.padMove=d=>{const g=S.groups[S.cg];let pi=padP+d,h=padH;if(pi>=g.length){pi=0;h++}if(pi<0){pi=g.length-1;h--}if(h>=S.holes||h<0)return closePad();openPad(pi,h)};
@@ -521,10 +544,11 @@ const baseURL=()=>location.href.split('#')[0];
 const liveURL=id=>baseURL()+'#live='+id, joinURL=E=>baseURL()+'#join='+E.id+'.'+E.k;
 function qrSVG(t,cell){try{const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag({cellSize:cell||4,margin:2,scalable:true})}catch(e){return''}}
 let LST='',LV=null,LVID=null,LVSEL='all';window.JOIN=null;window.EF=null;window.TDL={get LV(){return LV},BE,liveURL:i=>liveURL(i),joinURL:e=>joinURL(e),pull:()=>livePull(),poll:()=>pollLive()};
+window.TDX={isBack,lo,ao,nineName,cpar,csi,shots,tot,ptsGrid,twoList,link,drawText,dec,hasScores,save,renderDraw,renderScore,renderCard,renderEvent}; // test hooks (tests/nine.js)
 function liveStat(s){LST=s;document.querySelectorAll('.lvst').forEach(e=>{e.textContent=lstText();e.className='lvst '+s})}
 function lstText(){return LST==='ok'&&!LIVE?'● Saved on this phone only (live sharing not set up)':LST==='ok'?'● Live · synced '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}):LST==='err'?'● Offline – will retry':LST==='missing'?'Event not found':LIVE?'● Connecting…':'● This phone only (live sharing not set up)'}
 function cfix(c,n){c=JSON.parse(JSON.stringify(c));if(c.par.length<n){c.par=c.par.concat(c.par).slice(0,18);c.si=c.si.concat(c.si.map(x=>x*2)).map((x,i)=>i<9?x*2-1:x).slice(0,18);if(c.m)c.m=c.m.concat(c.m)}return c}
-function applyDay(d){const day=S.ev.days[d],f=S.courses.find(c=>c.name===day.c.name);S.course=f?cfix(f,day.c.n):{name:day.c.name,par:day.c.par.slice(),si:day.c.si.slice(),...(day.c.tees&&day.c.tees.length?{tees:day.c.tees.map(t=>({...t,m:[]})),tee:day.c.tees[0].name}:{})};S.holes=day.c.n;S.ev.d=d;S.cg=0;S.ch=0}
+function applyDay(d){const day=S.ev.days[d],f=S.courses.find(c=>c.name===day.c.name);S.course=f?cfix(f,day.c.n):{name:day.c.name,par:day.c.par.slice(),si:day.c.si.slice(),...(day.c.nine&&day.c.n===9&&day.c.par.length<18?{half:day.c.nine}:{}),...(day.c.tees&&day.c.tees.length?{tees:day.c.tees.map(t=>({...t,m:[]})),tee:day.c.tees[0].name}:{})};S.holes=day.c.n;S.nine=day.c.nine||'front';S.ev.d=d;S.cg=0;S.ch=0}
 const _save=save;save=function(){_save();livePush()};window.save=save;
 function gData(g,i){return{p:g.slice(),h:g.map(p=>+S.hcp[p]||0),s:Object.fromEntries(g.map(p=>[p,(S.scores[p]||[]).slice(0,S.holes).map(x=>x||0)])),t:S.ev&&S.ev.role==='scorer'?(S.ev.t||''):addMin(S.tstart,i*S.tint)}}
 function myGroups(){if(!S.ev||!S.ev.k)return[];return S.ev.role==='scorer'?[[S.ev.gi,S.groups[0]]]:S.groups.map((g,i)=>[i,g])}
@@ -557,9 +581,9 @@ const cellv=(r,rank)=>!r||!r.th?'<span class="mut">–</span>':(rank==='pts'?`<b
 function boardHTML(o,sel,onsel){const m=o.meta,B=evBoard(m,o.groups,m.rank),D=m.days.length;
  const tabs=`<div class="seg lvtabs">${[['all','Overall'],...m.days.map((d,i)=>[String(i),'Day '+(i+1)])].map(([k,l])=>`<button class="${sel===k?'on':''}" onclick="${onsel}('${k}')">${l}</button>`).join('')}</div>`;
  if(sel==='all'){return tabs+`<table class="lvt"><tr><th>#</th><th style="text-align:left">Player</th>${D>1?m.days.map((d,i)=>`<th>D${i+1}</th>`).join(''):''}<th>${m.rank==='pts'?'Pts':m.rank==='nett'?'Nett':'Gross'}</th></tr>`+
-  (B.map(r=>`<tr><td>${r.pos}</td><td style="text-align:left"><b>${esc(r.p)}</b></td>${D>1?r.days.map(x=>`<td>${cellv(x,m.rank)}</td>`).join(''):''}<td class="lvtot">${m.rank==='pts'?r.t.pts:`${m.rank==='nett'?r.t.net:r.t.g} <span class="mut">${rel(r.val)}</span>`}</td></tr>`).join('')||`<tr><td colspan="${D+3}" class="mut">No scores yet.</td></tr>`)+'</table>'+`<div class="mut" style="margin-top:6px">Ranking: ${RANKS[m.rank]}${D>1?' · per-day columns show that day; (n) = holes played so far':''}</div>`}
+  (B.map(r=>`<tr><td>${r.pos}</td><td style="text-align:left"><b>${esc(r.p)}</b></td>${D>1?r.days.map(x=>`<td>${cellv(x,m.rank)}</td>`).join(''):''}<td class="lvtot">${m.rank==='pts'?r.t.pts:`${m.rank==='nett'?r.t.net:r.t.g} <span class="mut">${rel(r.val)}</span>`}</td></tr>`).join('')||`<tr><td colspan="${D+3}" class="mut">No scores yet.</td></tr>`)+'</table>'+`<div class="mut" style="margin-top:6px">Ranking: ${RANKS[m.rank]}${m.days.some(d=>d.c.n===9)?' · '+m.days.map((d,i)=>(D>1?'D'+(i+1)+' ':'')+nineLabel(d.c.n,d.c.nine)).join(', '):''}${D>1?' · per-day columns show that day; (n) = holes played so far':''}</div>`}
  const di=+sel,day=m.days[di],gc=day.g==null?999:day.g;const ks=Object.keys(o.groups||{}).filter(k=>{const[a,b]=k.split(':').map(Number);return a===di&&b<gc}).sort((a,b)=>+a.split(':')[1]-+b.split(':')[1]);
- return tabs+`<div class="mut" style="margin:4px 0 8px">${esc(day.c.name)} · ${day.c.n} holes${day.date?' · '+esc(day.date):''}</div>`+(ks.map(k=>{const g=o.groups[k],R=evRound(day.c,g);return`<div class="lvg"><div class="lvgh">Group ${+k.split(':')[1]+1}${g.t?' · '+esc(g.t):''}</div><table class="lvt"><tr><th style="text-align:left">Player</th><th>CH</th><th>Thru</th><th>Gross</th><th>Nett</th><th>Pts</th></tr>${R.map(r=>`<tr><td style="text-align:left">${esc(r.p)}</td><td>${r.ch}</td><td>${r.th===r.n?'F':r.th}</td><td>${r.th?r.g:'–'}</td><td>${r.th?r.net:'–'}</td><td><b>${r.th?r.pts:'–'}</b></td></tr>`).join('')}</table></div>`}).join('')||'<div class="mut">No groups for this day yet.</div>')}
+ return tabs+`<div class="mut" style="margin:4px 0 8px">${esc(day.c.name)} · ${nineLabel(day.c.n,day.c.nine)}${day.date?' · '+esc(day.date):''}</div>`+(ks.map(k=>{const g=o.groups[k],R=evRound(day.c,g);return`<div class="lvg"><div class="lvgh">Group ${+k.split(':')[1]+1}${g.t?' · '+esc(g.t):''}</div><table class="lvt"><tr><th style="text-align:left">Player</th><th>CH</th><th>Thru</th><th>Gross</th><th>Nett</th><th>Pts</th></tr>${R.map(r=>`<tr><td style="text-align:left">${esc(r.p)}</td><td>${r.ch}</td><td>${r.th===r.n?'F':r.th}</td><td>${r.th?r.g:'–'}</td><td>${r.th?r.net:'–'}</td><td><b>${r.th?r.pts:'–'}</b></td></tr>`).join('')}</table></div>`}).join('')||'<div class="mut">No groups for this day yet.</div>')}
 window.lvSel=k=>{LVSEL=k;drawLive()};window.evSel=k=>{LVSEL=k;renderEvent()};
 function drawLive(){const el=$('lvb');if(!LV){el.innerHTML='<div class="mut">Loading live scores…</div>';return}
  if(LV==='missing'){el.innerHTML='<h2>Event not found</h2><div class="mut">Check the link or QR code.'+(LIVE?'':' (Live sharing isn’t set up in this copy of TeeDraw, so events only exist on the phone that created them.)')+'</div>';return}
@@ -569,9 +593,9 @@ function renderEvent(){const el=$('evb'),E=S.ev;
  if(JOIN){const o=JOIN.o;if(!o){el.innerHTML='<div class="card">Loading event…</div>';return}
   if(o==='missing'||o==='err'){el.innerHTML=`<div class="card"><h2>Can’t open event</h2><div class="mut">${o==='err'?'No connection – try again.':'Event not found.'}</div><div class="btns"><button class="sec" onclick="JOIN=null;renderEvent()">Close</button></div></div>`;return}
   const d=o.meta.d||0,day=o.meta.days[d],gc=day.g==null?999:day.g,ks=Object.keys(o.groups||{}).filter(k=>+k.split(':')[0]===d&&+k.split(':')[1]<gc).sort((a,b)=>+a.split(':')[1]-+b.split(':')[1]);
-  el.innerHTML=`<div class="card"><h2>Score for a group</h2><div><b>${esc(o.meta.name)}</b> · Day ${d+1} · ${esc(day.c.name)}</div><div class="mut" style="margin:6px 0">Pick your group. Scores you enter show live for everyone with the event QR.</div>${ks.map(k=>{const g=o.groups[k];return`<button class="sec wide" onclick="evJoin('${k}')">Group ${+k.split(':')[1]+1}${g.t?' · '+esc(g.t):''}<br><small>${g.p.map(esc).join(', ')}</small></button>`}).join('')||'<div class="mut">The organiser hasn’t shared groups yet.</div>'}<div class="btns"><button class="sec" onclick="JOIN=null;renderEvent()">Cancel</button></div></div>`;return}
- if(!E){if(!EF)EF={name:'',days:1,rank:'pts',c:[S.courses.findIndex(c=>c.name===S.course.name)],h:[S.holes],dt:[S.date]};
-  const dayRow=i=>`<div class="row evday"><div style="flex:0 0 44px"><label>Day ${i+1}</label></div><div><select onchange="EF.c[${i}]=+this.value">${S.courses.map((c,j)=>`<option value="${j}" ${(EF.c[i]??EF.c[0])==j?'selected':''}>${esc(c.name)}${c.src==='community'||c.cid?' · Community':''}</option>`).join('')}</select></div><div style="flex:0 0 74px"><select onchange="EF.h[${i}]=+this.value"><option value="18">18</option><option value="9" ${(EF.h[i]??EF.h[0])==9?'selected':''}>9</option></select></div></div>`;
+  el.innerHTML=`<div class="card"><h2>Score for a group</h2><div><b>${esc(o.meta.name)}</b> · Day ${d+1} · ${esc(day.c.name)} · ${nineLabel(day.c.n,day.c.nine)}</div><div class="mut" style="margin:6px 0">Pick your group. Scores you enter show live for everyone with the event QR.</div>${ks.map(k=>{const g=o.groups[k];return`<button class="sec wide" onclick="evJoin('${k}')">Group ${+k.split(':')[1]+1}${g.t?' · '+esc(g.t):''}<br><small>${g.p.map(esc).join(', ')}</small></button>`}).join('')||'<div class="mut">The organiser hasn’t shared groups yet.</div>'}<div class="btns"><button class="sec" onclick="JOIN=null;renderEvent()">Cancel</button></div></div>`;return}
+ if(!E){if(!EF)EF={name:'',days:1,rank:'pts',c:[S.courses.findIndex(c=>c.name===S.course.name)],h:[S.holes],nn:[S.nine==='back'?'back':'front'],dt:[S.date]};
+  const dayRow=i=>`<div class="row evday"><div style="flex:0 0 44px"><label>Day ${i+1}</label></div><div><select onchange="EF.c[${i}]=+this.value">${S.courses.map((c,j)=>`<option value="${j}" ${(EF.c[i]??EF.c[0])==j?'selected':''}>${esc(c.name)}${c.src==='community'||c.cid?' · Community':''}</option>`).join('')}</select></div><div style="flex:0 0 104px"><select aria-label="Holes, day ${i+1}" onchange="EF.h[${i}]=this.value==='18'?18:9;EF.nn[${i}]=this.value==='9b'?'back':'front'"><option value="18">18 holes</option><option value="9f" ${(EF.h[i]??EF.h[0])==9&&(EF.nn[i]??EF.nn[0])!=='back'?'selected':''}>Front 9</option><option value="9b" ${(EF.h[i]??EF.h[0])==9&&(EF.nn[i]??EF.nn[0])==='back'?'selected':''}>Back 9</option></select></div></div>`;
   el.innerHTML=`<div class="card"><h2>📡 New event</h2><div class="mut">Multi-day or single round. Your current draw becomes Day 1’s groups.</div>
   <label>Event name</label><input id="evn" maxlength="60" value="${esc(EF.name)}" placeholder="e.g. Monzi Weekend Classic" oninput="EF.name=this.value">
   <div class="row"><div><label>Days / rounds</label><select onchange="EF.days=+this.value;renderEvent()">${[1,2,3,4,5,6,7].map(n=>`<option ${n===EF.days?'selected':''}>${n}</option>`).join('')}</select></div>
@@ -581,7 +605,7 @@ function renderEvent(){const el=$('evb'),E=S.ev;
   <div class="mut" style="margin-top:8px">${LIVE?'Live sharing is on: anyone with the event QR can watch scores update.':'Live sharing isn’t set up in this copy yet, so the event and its leaderboard work on this phone only.'} Use first names or nicknames only.</div></div>`;return}
  const o=evLocalView();
  el.innerHTML=`<div class="card"><h2 style="margin:0">📡 ${esc(E.name)}</h2><div class="mut">${E.days.length} day${E.days.length>1?'s':''} · ${RANKS[E.rank]} · ${E.role==='org'?'Organiser':'Scorer'}</div><div class="lvst ${LST}">${lstText()}</div>
- ${E.role==='org'?`<label>Scoring day</label><div class="seg">${E.days.map((d,i)=>`<button class="${i===E.d?'on':''}" onclick="evDay(${i})">Day ${i+1}</button>`).join('')}</div><div class="mut" style="margin-top:4px">Day ${E.d+1}: ${esc(E.days[E.d].c.name)} · ${E.days[E.d].c.n} holes · ${S.groups.length} group(s) from the Draw tab</div>`:`<div class="mut">You score for Group ${E.gi+1} on Day ${E.d+1}.</div>`}
+ ${E.role==='org'?`<label>Scoring day</label><div class="seg">${E.days.map((d,i)=>`<button class="${i===E.d?'on':''}" onclick="evDay(${i})">Day ${i+1}</button>`).join('')}</div><div class="mut" style="margin-top:4px">Day ${E.d+1}: ${esc(E.days[E.d].c.name)} · ${nineLabel(E.days[E.d].c.n,E.days[E.d].c.nine)} · ${S.groups.length} group(s) from the Draw tab</div>`:`<div class="mut">You score for Group ${E.gi+1} on Day ${E.d+1}.</div>`}
  <div class="qrs"><div class="qrbox">${qrSVG(liveURL(E.id),5)}<b>Live scores</b><span class="mut">Anyone can scan to watch (view only)</span></div>
  ${E.role==='org'?`<div class="qrbox sc">${qrSVG(joinURL(E),5)}<b>Scorers</b><span class="mut">Only for one scorer per group</span></div>`:''}</div>
  <div class="btns"><button onclick="evShare()">Share live link</button>${E.role==='org'?'<button class="sec" onclick="evShareJoin()">Send scorer link</button>':''}<button class="sec" onclick="location.hash=\'live=${E.id}\'">Open live view</button></div></div>
@@ -593,11 +617,11 @@ function evLocalView(){const E=S.ev;const groups=Object.assign({},(LV&&LV.meta&&
  return{meta:{name:E.name,rank:E.rank,days:E.role==='org'?metaObj().days:E.days},groups}}
 function gDataR(g,r){return{p:g,h:g.map(p=>+(r.hcp||{})[p]||+S.hcp[p]||0),s:Object.fromEntries(g.map(p=>[p,(r.scores[p]||[]).map(x=>x||0)]))}}
 let _evRemote={};
-window.evCreate=async()=>{const name=(EF.name||'').trim().slice(0,60)||'Golf day';const days=[...Array(EF.days).keys()].map(i=>{const c=S.courses[EF.c[i]??EF.c[0]]||S.course,n=EF.h[i]??EF.h[0],f=cfix(c,n);return{c:{name:c.name,par:f.par.slice(0,n),si:f.si.slice(0,n),n,...(c.tees&&c.tees.length?{tees:c.tees.slice(0,4).map(t=>({name:t.name,color:t.color,cr:t.cr,sr:t.sr}))}:{})},date:i===0?S.date:''}});
+window.evCreate=async()=>{const name=(EF.name||'').trim().slice(0,60)||'Golf day';const days=[...Array(EF.days).keys()].map(i=>{const c=S.courses[EF.c[i]??EF.c[0]]||S.course,n=EF.h[i]??EF.h[0];return{c:dayC(c,n,EF.nn[i]??EF.nn[0]),date:i===0?S.date:''}});
  const id=rid(20),k=rid(20),meta={v:1,name,rank:EF.rank,days,d:0};
  try{await BE.create(id,k,meta)}catch(e){return toast('Could not create the event online – check your connection')}
  S.ev={id,k,role:'org',d:0,name,rank:EF.rank,days};S.evLS={};S.evR={};_lm='';EF=null;
- const keep=S.course.name===days[0].c.name&&S.holes===days[0].c.n;applyDay(0);if(!keep)S.scores={};track('event_created',{days:days.length,rank:meta.rank});save();livePush(1);renderEvent();toast('Event created')};
+ const keep=S.course.name===days[0].c.name&&S.holes===days[0].c.n&&(S.holes!==9||(days[0].c.nine==='back')===isBack());applyDay(0);if(!keep)S.scores={};track('event_created',{days:days.length,rank:meta.rank});save();livePush(1);renderEvent();toast('Event created')};
 window.evDay=async d=>{const E=S.ev;if(d===E.d)return;clearTimeout(_pt);await doPush();S.evR=S.evR||{};S.evR[E.d]={groups:S.groups,scores:S.scores,hcp:Object.fromEntries(S.groups.flat().map(p=>[p,+S.hcp[p]||0]))};
  const r=S.evR[d];applyDay(d);if(r){S.groups=r.groups;S.scores=r.scores}else S.scores={};save();renderEvent();toast('Now scoring Day '+(d+1))};
 window.evJoin=k=>{const o=JOIN.o,g=o.groups[k],d=+k.split(':')[0],gi=+k.split(':')[1];
