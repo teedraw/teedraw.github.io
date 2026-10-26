@@ -78,10 +78,18 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
 .note{border:1px solid #dfe7da;border-radius:10px;padding:8px;margin-bottom:8px}.ctrs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.ctr{display:flex;align-items:center;gap:4px;font-size:13px}.ctr button{width:32px;height:32px;padding:0}.ctr b{min-width:18px;text-align:center}.ctr input{width:70px;padding:6px}
 #inst{display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d;border-radius:12px;padding:8px 10px;margin:10px 12px 0;font-size:14px}#inst b{flex:1}#inst .x{background:none;color:#64748b;padding:4px 8px}#inst.hidden{display:none}
 .rl{max-height:none}.rli{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #eef2ea;min-height:48px}.rli input[type=checkbox]{width:24px;height:24px;flex:0 0 auto;accent-color:var(--g2);margin:0}.rli label{flex:1;margin:0;font-size:16px;color:var(--ink);display:flex;align-items:baseline;gap:6px;cursor:pointer}.rli label small{color:var(--mut);font-size:13px}.rli .ic{background:#e3efe0;color:var(--g);padding:6px 10px;font-size:14px;flex:0 0 auto}.rli .ic.del{color:var(--red)}.rcount{background:var(--g2);color:#fff;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700}.rform{display:flex;gap:8px;align-items:center}.rform input{flex:1;min-width:0}.rform input.hi{flex:0 0 78px}.chip button.sv{color:var(--g);font-size:12px}
+.cam{position:fixed;inset:0;background:var(--bg);z-index:30;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.cam .top{position:sticky;top:0;z-index:3;background:var(--g);color:#fff;display:flex;align-items:center;gap:8px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top))}
+.cam .ph{position:sticky;top:calc(52px + env(safe-area-inset-top));z-index:2;background:#0f2e1a;text-align:center;height:26vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:zoom-in}.cam .ph.sm{height:44px}.cam .ph img{max-width:100%;min-height:0;flex:1;object-fit:contain}.ph-h{font-size:11px;color:#bbf7d0;padding:2px 0}
+.ce{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}.ce .hr{display:grid;grid-template-columns:22px 1fr 1fr;gap:4px;align-items:center;margin-bottom:4px}.ce .hr b{font-size:13px;text-align:center;color:var(--mut)}.ce input.cn{padding:8px 0;text-align:center;font-size:18px;font-weight:700;scroll-margin-top:150px;scroll-margin-bottom:260px}.ce input.cn.bad{border-color:var(--red);background:#fee2e2}
+.ctot{margin-top:6px;font-size:14px;text-align:center}.cerr{margin-top:4px;font-size:13px;color:#92400e;background:#fffbeb;border-radius:8px;padding:6px 8px}.cerr.ok{color:#166534;background:#f0fdf4}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink);margin:10px 0 0}.chk input{width:22px;height:22px;flex:none;padding:0;margin:0}
+.lbx{position:fixed;inset:0;background:#000;z-index:40}.lbx .lbc{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}.lbx img{display:block;max-width:none;margin:0 auto}.lbx .lbb{position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:6px;z-index:2}.lbx .lbb button{background:#000a;border:1px solid #fff6;min-width:44px;padding:8px 12px}
+.tag{font-size:10px;background:#dbeafe;color:#1e40af;border-radius:99px;padding:1px 7px;font-weight:600;vertical-align:middle;margin-left:4px}.lk{background:none;color:#1d4ed8;padding:4px 8px 4px 0;font-size:13px;font-weight:500}#nearby{border:2px solid var(--g3)}
 </style></head><body>
 <header><svg id="logo" onclick="logoTap()" style="cursor:pointer" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 21V3l10 4-10 4"/><ellipse cx="10" cy="21" rx="7" ry="1.5"/></svg><h1>TeeDraw</h1><button class="pro" onclick="proInfo()">PRO soon</button></header>
 <div id="inst" class="hidden"></div>
 <main>
+<div class="card hidden" id="nearby"></div>
 <!-- PLAYERS -->
 <section id="v-players">
  <div class="card" id="rostercard"><h2 style="display:flex;justify-content:space-between;align-items:center">My players <span class="rcount" id="rcount">0 ticked</span></h2>
@@ -102,7 +110,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
   <label>Or paste a list (one per line)</label><textarea id="plist" placeholder="Mark&#10;Sipho&#10;Johan"></textarea>
   <div class="btns"><button class="sec" onclick="addList()">Add list</button><button class="sec" onclick="clearPlayers()">Clear all</button></div>
   <div class="chips" id="chips" style="margin-top:12px"></div></div>
- <div class="card"><details><summary><b>About &amp; privacy</b></summary><p class="mut">TeeDraw stores your players, draws and scores only on this phone. If anonymous usage stats are switched on, we count things like "a draw was made with 12 players in 3 groups" or "a round was finished at Monzi", plus a rough country/region worked out from the connection. Live events (optional): if you create or join an event and live sharing is set up, that event’s first names/nicknames, course handicaps, tee times and scores are stored online so people with the event link or QR can watch. Event codes are random (about 100 bits), never listed, and only people with the separate scorer link can change scores. Use first names or nicknames only – no surnames or phone numbers. Without live setup, events stay on this phone. We never send player names, phone numbers, scores per person or anything that identifies you, and we use no cookies and no tracking across other sites. This helps us show sponsors how many golfers use the app. Questions: contact the TeeDraw team.</p></details></div>
+ <div class="card"><details><summary><b>About &amp; privacy</b></summary><p class="mut">TeeDraw stores your players, draws and scores only on this phone. If anonymous usage stats are switched on, we count things like "a draw was made with 12 players in 3 groups" or "a round was finished at Monzi", plus a rough country/region worked out from the connection. Live events (optional): if you create or join an event and live sharing is set up, that event’s first names/nicknames, course handicaps, tee times and scores are stored online so people with the event link or QR can watch. Event codes are random (about 100 bits), never listed, and only people with the separate scorer link can change scores. Use first names or nicknames only – no surnames or phone numbers. Without live setup, events stay on this phone. We never send player names, phone numbers, scores per person or anything that identifies you, and we use no cookies and no tracking across other sites. This helps us show sponsors how many golfers use the app. Community courses: if you add a course from a scorecard photo and leave “Share with everyone” ticked, the course name, town, pars, stroke index, optional tee ratings, the photo and (only if you tick it) the course’s location are stored online and shown to all TeeDraw users; a random key kept on your phone lets only you correct your own entry. Photograph only the printed card, not people. “Find nearby course” reads your position once to compare it with saved courses on your phone; it is never stored or sent. Questions: contact the TeeDraw team.</p></details></div>
  <div class="ad" data-slot="banner-players">Sponsor / ad space<br><small>Your club or pro shop here</small></div>
 </section>
 <!-- DRAW -->
@@ -119,7 +127,8 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
 <!-- SCORE -->
 <section id="v-score" class="hidden">
  <div class="card"><h2>Course</h2>
-  <div class="row"><select id="courseSel" onchange="pickCourse()"></select><button class="sec sm" style="flex:0 0 auto" onclick="saveCourse()">Save</button><button class="sec sm" style="flex:0 0 auto" onclick="setTab('courses')">Courses</button></div>
+  <div class="row"><select id="courseSel" onchange="pickCourse()"></select><button class="sec sm" style="flex:0 0 auto;font-size:18px;padding:3px 10px" id="camBtn" title="Add a course from a scorecard photo" aria-label="Add a course from a scorecard photo" onclick="document.getElementById('camIn').click()">📷</button><button class="sec sm" style="flex:0 0 auto" onclick="saveCourse()">Save</button><button class="sec sm" style="flex:0 0 auto" onclick="setTab('courses')">Courses</button></div>
+  <div class="mut" style="margin-top:6px"><button class="lk" onclick="findNearby(true)">📍 Find nearby course</button> uses your location once, never stored</div>
   <label>Course name</label><input id="cname" oninput="S.course.name=this.value;save()">
   <details><summary class="mut" style="margin-top:10px">Edit par &amp; stroke index</summary>
    <label>Par</label><div class="pars" id="pars"></div><label>Stroke index</label><div class="pars" id="sis"></div></details>
@@ -158,7 +167,8 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
  <div id="pad" class="pad hidden"></div>
 </section>
 <section id="v-courses" class="hidden">
- <div class="card"><h2>Saved courses</h2><div id="clist"></div><div class="btns"><button onclick="editCourse(-1)">＋ Add a course</button></div></div>
+ <div class="card"><h2>Saved courses</h2><div id="clist"></div><div class="btns"><button onclick="editCourse(-1)">＋ Add a course</button><button class="sec" onclick="document.getElementById('camIn').click()">📷 From a scorecard photo</button><button class="sec" onclick="findNearby(true)">📍 Find nearby</button></div>
+  <div class="mut" style="margin-top:8px" id="cstat"></div><div class="mut" style="margin-top:4px">📷 Snap the scorecard, type in pars and stroke index, and it joins the shared list for everyone (tagged Community). “Find nearby” checks your position once against saved courses; your location is never stored or sent.</div></div>
  <div class="card hidden" id="cform"><h2 id="cftitle">Add a course</h2>
   <label>Club / course name</label><input id="f-name"><div class="row"><div><label>Tee / colour</label><input id="f-tee" placeholder="White"></div><div><label>Holes</label><select id="f-holes" onchange="buildForm()"><option value="18">18 holes</option><option value="9">9 holes</option><option value="9x2">9 holes played twice (2nd-nine par/SI)</option></select></div></div>
   <div class="mut" style="margin:8px 0">Distance is optional (metres).</div>
@@ -170,6 +180,8 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
 <section id="v-stats" class="hidden"><div class="card"><h2>📊 Device stats (testing)</h2><div class="mut">Counts kept only on this phone. Analytics: <b id="anon"></b></div><table id="stt" style="margin-top:8px"></table><div class="btns"><button class="sec" onclick="localStorage.removeItem('teedraw.stats');location.reload()">Reset counters</button><button class="sec" onclick="setTab('players')">Close</button></div></div></section>
 </main>
 <nav id="nav"></nav><div class="toast" id="toast"></div>
+<input type="file" id="camIn" accept="image/*" capture="environment" class="hidden" onchange="camPick(this)"><input type="file" id="galIn" accept="image/*" class="hidden" onchange="camPick(this)">
+<div id="cam" class="cam hidden"></div><div id="lbx" class="lbx hidden"></div>
 <script>
 /* ===== ANALYTICS CONFIG =====
    Paste your Umami Cloud "Website ID" between the quotes (looks like 94db1cb1-74f4-4a40-ad6c-962362670409).
@@ -227,23 +239,39 @@ function evBoard(meta,groups,rank){const D=meta.days.length,M={};
  const rows=Object.values(M).map(m=>{const t={g:0,net:0,pts:0,th:0,pp:0,rounds:0};m.days.forEach(r=>{if(r&&r.th){t.g+=r.g;t.net+=r.net;t.pts+=r.pts;t.th+=r.th;t.pp+=r.pp;t.rounds++}});return{...m,t,val:val(t)}}).filter(r=>r.t.th);
  rows.sort((a,b)=>(rank==='pts'?b.val-a.val:a.val-b.val)||b.t.th-a.t.th||a.p.localeCompare(b.p));
  rows.forEach((r,i)=>{r.pos=i&&r.val===rows[i-1].val?rows[i-1].pos:i+1});return rows}
-if(typeof module!=='undefined')module.exports={groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard};
+// community courses: pure helpers (same normalisation as supabase-courses.sql te_norm)
+function normOne(t){const s=String(t||'').toLowerCase(),k=s.replace(/\(.*?\)/g,' ').replace(/\b(golf|country|club|course|estate|resort|the|and|gc|cc)\b/g,' ').replace(/[^a-z0-9]+/g,'');return k||s.replace(/[^a-z0-9]+/g,'')}
+function normKey(name,town){return normOne(name)+'|'+normOne(town)}
+function sameCourse(a,b){const x=normOne(a.name),y=normOne(b.name);if(!x||x!==y)return false;const t=normOne(a.town),u=normOne(b.town);return !t||!u||t===u}
+function checkCourse(par,si,n){n=n||par.length;const e=[],pb=[],sb=[];let filled=0;
+ for(let i=0;i<n;i++){const p=par[i];if(p===''||p==null||isNaN(p)){continue}if(p<3||p>6){pb.push(i);}}
+ const pf=par.slice(0,n).filter(p=>p!==''&&p!=null&&!isNaN(p)).length,sf=si.slice(0,n).filter(v=>v!==''&&v!=null&&!isNaN(v)).length;
+ const seen={};for(let i=0;i<n;i++){const v=si[i];if(v===''||v==null||isNaN(v))continue;if(v<1||v>n||v%1){sb.push(i);continue}(seen[v]=seen[v]||[]).push(i)}
+ Object.values(seen).forEach(a=>{if(a.length>1)sb.push(...a)});
+ if(pf<n)e.push('Par: '+pf+' of '+n+' entered');if(pb.length)e.push('Par must be 3–6 (hole '+pb.map(i=>i+1).join(', ')+')');
+ if(sf<n)e.push('Stroke index: '+sf+' of '+n+' entered');if(sb.length)e.push('Stroke index must use 1–'+n+' once each (check hole '+[...new Set(sb)].sort((a,b)=>a-b).map(i=>i+1).join(', ')+')');
+ const sum=a=>a.reduce((x,y)=>x+(+y||0),0),pa=par.slice(0,n).map(v=>+v||0);
+ return{ok:!e.length,errs:e,pb,sb,out:sum(pa.slice(0,9)),inn:n>9?sum(pa.slice(9,18)):0,tot:sum(pa)}}
+function haversineKm(a,b,c,d){const R=6371,r=x=>x*Math.PI/180,dl=r(c-a),dn=r(d-b),h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
+function nearestCourse(lat,lng,list,maxKm){maxKm=maxKm||15;let best=null;list.forEach((c,i)=>{if(!isFinite(c.lat)||!isFinite(c.lng)||c.lat==null||c.lng==null)return;const d=haversineKm(lat,lng,+c.lat,+c.lng);if(d<=maxKm&&(!best||d<best.km))best={i,c,km:d}});return best}
+if(typeof module!=='undefined')module.exports={normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard};
 </script>
 <script>
 if(typeof document!=='undefined'){
-const MONZI={name:'Monzi Country Club (KZN)',v:3,tee:'White',n:18,twice:true,par:[5,4,3,4,3,4,5,4,4,4,4,3,5,3,4,4,4,4],si:[5,7,15,1,17,9,13,3,11,4,8,18,6,14,10,2,12,16],
+const MONZI={name:'Monzi Country Club (KZN)',v:3,lat:-28.4326,lng:32.2990,tee:'White',n:18,twice:true,par:[5,4,3,4,3,4,5,4,4,4,4,3,5,3,4,4,4,4],si:[5,7,15,1,17,9,13,3,11,4,8,18,6,14,10,2,12,16],
  m:[508,338,165,366,142,333,456,364,313,414,331,126,457,168,316,384,329,282],
  tees:[{name:'White',color:'#fff',cr:71,sr:71,m:[508,338,165,366,142,333,456,364,313,414,331,126,457,168,316,384,329,282]},{name:'Red',color:'#dc2626',cr:71,sr:71,m:[440,300,150,303,108,262,388,301,278,360,309,123,405,131,290,306,236,256]}]};
 const STD={name:'Standard par 72',par:[4,4,3,5,4,4,3,4,5,4,4,3,5,4,4,3,4,5],si:[7,11,15,1,9,3,17,13,5,8,12,16,2,10,4,18,14,6]};
 const KEY='teedraw.v1';
 let S=JSON.parse(localStorage.getItem(KEY)||'null')||{players:[],holes:18,size:'auto',tstart:'07:30',tint:8,groups:[],course:JSON.parse(JSON.stringify(MONZI)),courses:[MONZI,STD],scores:{},hcp:{},cg:0,ch:0,tab:'players',lbm:'gross'};
 if(!S.courses.some(c=>c.name===MONZI.name&&c.v===3)){S.courses=[MONZI].concat(S.courses.filter(c=>!/^Monzi/.test(c.name)));if(/^Monzi/.test(S.course.name))S.course=JSON.parse(JSON.stringify(MONZI))}
+S.courses.forEach(c=>{if(c.name===MONZI.name&&c.lat==null){c.lat=MONZI.lat;c.lng=MONZI.lng}});if(S.course.name===MONZI.name&&S.course.lat==null){S.course.lat=MONZI.lat;S.course.lng=MONZI.lng}
 if(S.carry===undefined)S.carry=true;
 if(S.shade===undefined)S.shade=true;if(!S.date)S.date=new Date().toISOString().slice(0,10);
 window.S=S;
 // ---- anonymous analytics (no names/phones; only counts, course name, 9/18) ----
 const LKEY='teedraw.stats';const L=JSON.parse(localStorage.getItem(LKEY)||'{}');
-const SAFE_COURSES=()=>S.courses.map(c=>c.name);
+const SAFE_COURSES=()=>S.courses.filter(c=>c.src!=='community'&&!c.cid&&!c.lid).map(c=>c.name);
 function track(ev,data){L[ev]=(L[ev]||0)+1;L._last=new Date().toISOString();localStorage.setItem(LKEY,JSON.stringify(L));
  if(ANALYTICS_ID&&window.umami&&umami.track){try{umami.track(ev,data||{})}catch(e){}}}
 window.tdBeforeSend=(type,p)=>{if(p){p.url='/';p.title='TeeDraw';if(p.referrer)p.referrer=p.referrer.split(/[?#]/)[0];}return p};
@@ -254,12 +282,12 @@ const _t=track;track=(e,d)=>{if(ANALYTICS_ID&&!(window.umami&&umami.track)){pend
 window.track=(...a)=>track(...a);
 const courseTag=()=>SAFE_COURSES().includes(S.course.name)?S.course.name.slice(0,60):'custom';
 const $=id=>document.getElementById(id);
-function save(){progress();localStorage.setItem(KEY,JSON.stringify(S))}
+function save(){progress();try{localStorage.setItem(KEY,JSON.stringify(S,(k,v)=>k==='courses'&&Array.isArray(v)?v.filter(c=>c.src!=='community'):v))}catch(e){}}
 function progress(){if(!S.groups||!S.groups.length||typeof track!=='function')return;const all=S.groups.flat();
  const any=all.some(p=>(S.scores[p]||[]).some(Boolean));
  if(any&&!S.started){S.started=true;track('round_started',{holes:S.holes,players:all.length,course:courseTag()});track('course_used',{course:courseTag(),holes:S.holes})}
  if(any&&!S.finished&&all.every(p=>{const a=S.scores[p]||[];for(let h=0;h<S.holes;h++)if(!a[h])return false;return true})){S.finished=true;track('round_finished',{holes:S.holes,players:all.length,course:courseTag()})}}
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+let _tt;function toast(m,ms){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),ms||1800)}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 // hash import
 function enc(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
@@ -327,7 +355,7 @@ window.copyLink=()=>{navigator.clipboard?.writeText(link()).then(()=>toast('Link
 // course
 function cpar(){const p=S.course.par;if(p.length<S.holes){S.course.par=p.concat(p).slice(0,18);S.course.si=S.course.si.concat(S.course.si.map(x=>x*2)).map((x,i)=>i<9?x*2-1:x).slice(0,18);if(S.course.m)S.course.m=S.course.m.concat(S.course.m)}return S.course.par.slice(0,S.holes)}
 function renderCourse(){
- $('courseSel').innerHTML=S.courses.map((c,i)=>`<option value="${i}" ${c.name===S.course.name?'selected':''}>${esc(c.name)}</option>`).join('')+(S.courses.some(c=>c.name===S.course.name)?'':`<option selected>${esc(S.course.name)} (unsaved)</option>`);
+ $('courseSel').innerHTML=S.courses.map((c,i)=>`<option value="${i}" ${c.name===S.course.name?'selected':''}>${esc(c.name)}${c.src==='community'||c.cid?' · Community':''}</option>`).join('')+(S.courses.some(c=>c.name===S.course.name)?'':`<option selected>${esc(S.course.name)} (unsaved)</option>`);
  $('cname').value=S.course.name;
  const f=(k,id,mx)=>{$(id).innerHTML=S.course[k].slice(0,S.holes).map((v,i)=>`<input inputmode="numeric" value="${v}" aria-label="${k} ${i+1}" data-i="${i}" data-k="${k}" title="Hole ${i+1}">`).join('');};
  f('par','pars');f('si','sis');
@@ -459,11 +487,13 @@ window.padSet=v=>{const p=S.groups[S.cg][padP];sc(p)[padH]=v&&v>0?Math.min(v,20)
 window.padMove=d=>{const g=S.groups[S.cg];let pi=padP+d,h=padH;if(pi>=g.length){pi=0;h++}if(pi<0){pi=g.length-1;h--}if(h>=S.holes||h<0)return closePad();openPad(pi,h)};
 window.closePad=()=>{padP=padH=null;$('pad').classList.add('hidden');renderCard()};
 // ---- courses ----
-function renderCourses(){$('clist').innerHTML=S.courses.map((c,i)=>`<div class="prow"><div class="nm">${esc(c.name)}<small>${c.tee?esc(c.tee)+' · ':''}${c.par.length} holes${c.twice?' (9 played twice)':''} · par ${c.par.reduce((a,b)=>a+b,0)}${c.m&&c.m.some(Boolean)?' · '+c.m.reduce((a,b)=>a+(+b||0),0)+'m':''}</small></div><button class="sm" onclick="useCourse(${i})">${c.name===S.course.name?'✓ In use':'Use'}</button><button class="sec sm" onclick="editCourse(${i})">Edit</button><button class="sec sm" onclick="delCourse(${i})">✕</button></div>`).join('')}
+function renderCourses(){const q=qGet(),rd=jget(CK.rep,[]);$('clist').innerHTML=S.courses.map((c,i)=>{const cm=c.src==='community',shared=!!c.cid,hasPh=!!(c.lid&&phGet(c.lid))||(c.cid&&c.ph!==false);
+ return `<div class="prow"><div class="nm">${esc(c.name)}${cm||shared?'<span class="tag">Community</span>':''}${c.lat!=null?' <span title="Location saved">📍</span>':''}<small>${c.town?esc(c.town)+' · ':''}${c.tee?esc(c.tee)+' · ':''}${c.par.length} holes${c.twice?' (9 played twice)':''} · par ${c.par.reduce((a,b)=>a+b,0)}${c.m&&c.m.some(Boolean)?' · '+c.m.reduce((a,b)=>a+(+b||0),0)+'m':''}${c.lid&&q.includes(c.lid)?' · ⏳ waiting to share':''}${c.rep?' · ⚑ '+c.rep:''}</small>${hasPh&&(cm||shared||c.lid)?`<button class="lk" onclick="viewCourse(${i})">📷 Photo</button>`:''}${cm&&!rd.includes(c.cid)?`<button class="lk" onclick="repCourse(${i})">⚑ Report</button>`:''}</div><button class="sm" onclick="useCourse(${i})">${c.name===S.course.name?'✓ In use':'Use'}</button>${cm?'':`<button class="sec sm" onclick="editCourse(${i})">Edit</button>`}<button class="sec sm" onclick="delCourse(${i})">${cm?'Hide':'✕'}</button></div>`}).join('');
+ const cc=jget(CK.list,{}),n=(cc.list||[]).length;if($('cstat'))$('cstat').innerHTML=`Shared list: ${CST==='missing'?'not available yet':n+' course'+(n===1?'':'s')}${cc.t?' · updated '+new Date(cc.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}${CST==='net'?' · offline':''} · <button class="lk" style="font-size:12px" onclick="refreshCourses()">↻ Refresh</button>`}
 window.useCourse=i=>{const c=S.courses[i];track('course_selected',{course:c.name.slice(0,60)});S.course=JSON.parse(JSON.stringify(c));if(c.par.length===9)S.holes=9;save();renderCourses();toast('Using '+c.name)};
-window.delCourse=i=>{if(confirm('Delete '+S.courses[i].name+'?')){S.courses.splice(i,1);save();renderCourses()}};
+window.delCourse=i=>{const c=S.courses[i];if(c.src==='community'){if(confirm('Hide '+c.name+' on this phone?')){const h=jget(CK.hid,[]);h.push(c.cid);jset(CK.hid,h);S.courses.splice(i,1);save();renderCourses()}return}if(confirm('Delete '+c.name+'?')){if(c.lid){qDel(c.lid);try{localStorage.removeItem(CK.ph+c.lid)}catch(e){}delete PHM[c.lid]}S.courses.splice(i,1);save();renderCourses()}};
 let editI=-1;
-window.editCourse=i=>{editI=i;const c=i>=0?S.courses[i]:{name:'',tee:'',par:Array(18).fill(4),si:[...Array(18)].map((_,k)=>k+1),m:[]};
+window.editCourse=i=>{if(i>=0&&S.courses[i].lid)return camEdit(i);editI=i;const c=i>=0?S.courses[i]:{name:'',tee:'',par:Array(18).fill(4),si:[...Array(18)].map((_,k)=>k+1),m:[]};
  $('cftitle').textContent=i>=0?'Edit course':'Add a course';$('f-name').value=c.name;$('f-tee').value=c.tee||'';$('f-holes').value=c.twice?'9x2':String(c.par.length);
  buildForm(c);$('cform').classList.remove('hidden');$('cform').scrollIntoView({behavior:'smooth'})};
 window.buildForm=c=>{const old=c||readForm(true),mode=$('f-holes').value,n=mode==='9'?9:18;let rows='<b>#</b><b>Par</b><b>SI</b><b>Metres</b>';
@@ -494,7 +524,7 @@ let LST='',LV=null,LVID=null,LVSEL='all';window.JOIN=null;window.EF=null;window.
 function liveStat(s){LST=s;document.querySelectorAll('.lvst').forEach(e=>{e.textContent=lstText();e.className='lvst '+s})}
 function lstText(){return LST==='ok'&&!LIVE?'● Saved on this phone only (live sharing not set up)':LST==='ok'?'● Live · synced '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}):LST==='err'?'● Offline – will retry':LST==='missing'?'Event not found':LIVE?'● Connecting…':'● This phone only (live sharing not set up)'}
 function cfix(c,n){c=JSON.parse(JSON.stringify(c));if(c.par.length<n){c.par=c.par.concat(c.par).slice(0,18);c.si=c.si.concat(c.si.map(x=>x*2)).map((x,i)=>i<9?x*2-1:x).slice(0,18);if(c.m)c.m=c.m.concat(c.m)}return c}
-function applyDay(d){const day=S.ev.days[d],f=S.courses.find(c=>c.name===day.c.name);S.course=f?cfix(f,day.c.n):{name:day.c.name,par:day.c.par.slice(),si:day.c.si.slice()};S.holes=day.c.n;S.ev.d=d;S.cg=0;S.ch=0}
+function applyDay(d){const day=S.ev.days[d],f=S.courses.find(c=>c.name===day.c.name);S.course=f?cfix(f,day.c.n):{name:day.c.name,par:day.c.par.slice(),si:day.c.si.slice(),...(day.c.tees&&day.c.tees.length?{tees:day.c.tees.map(t=>({...t,m:[]})),tee:day.c.tees[0].name}:{})};S.holes=day.c.n;S.ev.d=d;S.cg=0;S.ch=0}
 const _save=save;save=function(){_save();livePush()};window.save=save;
 function gData(g,i){return{p:g.slice(),h:g.map(p=>+S.hcp[p]||0),s:Object.fromEntries(g.map(p=>[p,(S.scores[p]||[]).slice(0,S.holes).map(x=>x||0)])),t:S.ev&&S.ev.role==='scorer'?(S.ev.t||''):addMin(S.tstart,i*S.tint)}}
 function myGroups(){if(!S.ev||!S.ev.k)return[];return S.ev.role==='scorer'?[[S.ev.gi,S.groups[0]]]:S.groups.map((g,i)=>[i,g])}
@@ -541,7 +571,7 @@ function renderEvent(){const el=$('evb'),E=S.ev;
   const d=o.meta.d||0,day=o.meta.days[d],gc=day.g==null?999:day.g,ks=Object.keys(o.groups||{}).filter(k=>+k.split(':')[0]===d&&+k.split(':')[1]<gc).sort((a,b)=>+a.split(':')[1]-+b.split(':')[1]);
   el.innerHTML=`<div class="card"><h2>Score for a group</h2><div><b>${esc(o.meta.name)}</b> · Day ${d+1} · ${esc(day.c.name)}</div><div class="mut" style="margin:6px 0">Pick your group. Scores you enter show live for everyone with the event QR.</div>${ks.map(k=>{const g=o.groups[k];return`<button class="sec wide" onclick="evJoin('${k}')">Group ${+k.split(':')[1]+1}${g.t?' · '+esc(g.t):''}<br><small>${g.p.map(esc).join(', ')}</small></button>`}).join('')||'<div class="mut">The organiser hasn’t shared groups yet.</div>'}<div class="btns"><button class="sec" onclick="JOIN=null;renderEvent()">Cancel</button></div></div>`;return}
  if(!E){if(!EF)EF={name:'',days:1,rank:'pts',c:[S.courses.findIndex(c=>c.name===S.course.name)],h:[S.holes],dt:[S.date]};
-  const dayRow=i=>`<div class="row evday"><div style="flex:0 0 44px"><label>Day ${i+1}</label></div><div><select onchange="EF.c[${i}]=+this.value">${S.courses.map((c,j)=>`<option value="${j}" ${(EF.c[i]??EF.c[0])==j?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div><div style="flex:0 0 74px"><select onchange="EF.h[${i}]=+this.value"><option value="18">18</option><option value="9" ${(EF.h[i]??EF.h[0])==9?'selected':''}>9</option></select></div></div>`;
+  const dayRow=i=>`<div class="row evday"><div style="flex:0 0 44px"><label>Day ${i+1}</label></div><div><select onchange="EF.c[${i}]=+this.value">${S.courses.map((c,j)=>`<option value="${j}" ${(EF.c[i]??EF.c[0])==j?'selected':''}>${esc(c.name)}${c.src==='community'||c.cid?' · Community':''}</option>`).join('')}</select></div><div style="flex:0 0 74px"><select onchange="EF.h[${i}]=+this.value"><option value="18">18</option><option value="9" ${(EF.h[i]??EF.h[0])==9?'selected':''}>9</option></select></div></div>`;
   el.innerHTML=`<div class="card"><h2>📡 New event</h2><div class="mut">Multi-day or single round. Your current draw becomes Day 1’s groups.</div>
   <label>Event name</label><input id="evn" maxlength="60" value="${esc(EF.name)}" placeholder="e.g. Monzi Weekend Classic" oninput="EF.name=this.value">
   <div class="row"><div><label>Days / rounds</label><select onchange="EF.days=+this.value;renderEvent()">${[1,2,3,4,5,6,7].map(n=>`<option ${n===EF.days?'selected':''}>${n}</option>`).join('')}</select></div>
@@ -563,7 +593,7 @@ function evLocalView(){const E=S.ev;const groups=Object.assign({},(LV&&LV.meta&&
  return{meta:{name:E.name,rank:E.rank,days:E.role==='org'?metaObj().days:E.days},groups}}
 function gDataR(g,r){return{p:g,h:g.map(p=>+(r.hcp||{})[p]||+S.hcp[p]||0),s:Object.fromEntries(g.map(p=>[p,(r.scores[p]||[]).map(x=>x||0)]))}}
 let _evRemote={};
-window.evCreate=async()=>{const name=(EF.name||'').trim().slice(0,60)||'Golf day';const days=[...Array(EF.days).keys()].map(i=>{const c=S.courses[EF.c[i]??EF.c[0]]||S.course,n=EF.h[i]??EF.h[0],f=cfix(c,n);return{c:{name:c.name,par:f.par.slice(0,n),si:f.si.slice(0,n),n},date:i===0?S.date:''}});
+window.evCreate=async()=>{const name=(EF.name||'').trim().slice(0,60)||'Golf day';const days=[...Array(EF.days).keys()].map(i=>{const c=S.courses[EF.c[i]??EF.c[0]]||S.course,n=EF.h[i]??EF.h[0],f=cfix(c,n);return{c:{name:c.name,par:f.par.slice(0,n),si:f.si.slice(0,n),n,...(c.tees&&c.tees.length?{tees:c.tees.slice(0,4).map(t=>({name:t.name,color:t.color,cr:t.cr,sr:t.sr}))}:{})},date:i===0?S.date:''}});
  const id=rid(20),k=rid(20),meta={v:1,name,rank:EF.rank,days,d:0};
  try{await BE.create(id,k,meta)}catch(e){return toast('Could not create the event online – check your connection')}
  S.ev={id,k,role:'org',d:0,name,rank:EF.rank,days};S.evLS={};S.evR={};_lm='';EF=null;
@@ -581,6 +611,140 @@ window.evShareJoin=()=>wa(`✍️ TeeDraw scorer link for ${S.ev.name} (scorers 
 // QR on the card
 const _rc=renderCard;window.renderCard=renderCard=function(){_rc();const el=$('cqr');if(!el)return;if(!el)return;el.innerHTML=S.ev?`<div class="qrbox">${qrSVG(liveURL(S.ev.id),4)}<b>Scan for live scores</b><span class="mut">${esc(S.ev.name)} · Day ${S.ev.d+1}</span></div>`:`<div class="mut">Want a live QR on this card? <button class="lnk" onclick="setTab('event')">Create an event</button></div>`};
 if(S.ev)setTimeout(livePull,300);
+
+// ---------- community courses: scorecard photo entry + shared list (see supabase-courses.sql) ----------
+const CK={list:'teedraw.cc',q:'teedraw.cq',key:'teedraw.ckey',hid:'teedraw.ch',rep:'teedraw.cr',ph:'teedraw.cp.'};
+const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
+const devKey=()=>{let k=localStorage.getItem(CK.key);if(!k||k.length<16){k=rid(24);localStorage.setItem(CK.key,k)}return k}; // per-phone edit key, only sent with your own uploads
+const PHM={},phGet=l=>PHM[l]||localStorage.getItem(CK.ph+l)||null,phSet=(l,u)=>{PHM[l]=u;try{localStorage.setItem(CK.ph+l,u);return true}catch(e){return false}};
+const TCOL={white:'#fff',yellow:'#ca8a04',gold:'#ca8a04',red:'#dc2626',blue:'#2563eb',black:'#111827',green:'#16a34a',orange:'#ea580c',silver:'#94a3b8',purple:'#7c3aed'};
+const tcol=n=>{const k=String(n||'').toLowerCase();for(const w in TCOL)if(k.includes(w))return TCOL[w];return '#64748b'};
+const TDC=window.TDC={mock:false,rpc(fn,args){const bad=(kind,msg,st)=>Object.assign(new Error(msg||kind),{kind,status:st});
+ if(!LIVE)return Promise.reject(bad('missing','no backend'));if(!navigator.onLine)return Promise.reject(bad('net','offline'));
+ const h={'Content-Type':'application/json',apikey:LIVE.key};if(/^eyJ/.test(LIVE.key))h.Authorization='Bearer '+LIVE.key;
+ const ac=new AbortController(),to=setTimeout(()=>ac.abort(),30000);
+ return fetch(LIVE.url.replace(/\/$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:h,body:JSON.stringify(args),signal:ac.signal}).then(async r=>{clearTimeout(to);const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(r.ok)return j;const m=(j&&j.message)||'HTTP '+r.status;throw bad(r.status===400?(/rate limit/i.test(m)?'later':'reject'):[401,403,404].includes(r.status)?'missing':'net',m,r.status)},e=>{clearTimeout(to);throw bad('net',String(e&&e.message||e))})}};
+// photo: downscale + JPEG so it stays small (long edge <=1600px, ~0.7 quality, aim < 285 KB)
+async function loadBitmap(f){try{const b=await createImageBitmap(f,{imageOrientation:'from-image'});return{w:b.width,h:b.height,d:b}}catch(e){}
+ return new Promise((res,rej)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{res({w:i.naturalWidth,h:i.naturalHeight,d:i,u})};i.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'))};i.src=u})}
+async function compressImage(f,maxEdge,target){maxEdge=maxEdge||1600;target=target||380000;const b=await loadBitmap(f);let edge=maxEdge,q=.7,out;
+ try{for(let t=0;t<10;t++){const sc=Math.min(1,edge/Math.max(b.w,b.h)),w=Math.max(1,Math.round(b.w*sc)),h=Math.max(1,Math.round(b.h*sc)),cv=document.createElement('canvas');cv.width=w;cv.height=h;
+   const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(b.d,0,0,w,h);const url=cv.toDataURL('image/jpeg',q);out={url,w,h,bytes:Math.round((url.length-23)*.75),q};
+   if(url.length<=target||edge<=640)break;if(q>.45)q=Math.round((q-.1)*100)/100;else edge=Math.round(edge*.8)}}finally{if(b.u)URL.revokeObjectURL(b.u);if(b.d.close)b.d.close()}
+ return out}
+// course <-> shared list
+const num=(v,a,b)=>{v=parseFloat(v);return isFinite(v)&&v>=a&&v<=b?v:undefined};
+function toCourse(it){try{const d=it.d||{},par=(d.par||[]).map(Number),si=(d.si||[]).map(Number),n=par.length;if(n!==9&&n!==18||si.length!==n||!checkCourse(par,si,n).ok)return null;
+ const s=(v,l)=>String(v==null?'':v).replace(/[<>]/g,'').slice(0,l).trim(),c={name:s(it.name,60),town:s(it.town,40),n,par,si,src:'community',cid:+it.id,rep:+it.rep||0,ph:!!it.ph};if(!c.name||!c.cid)return null;
+ const mm=a=>Array.isArray(a)&&a.length===n?a.map(x=>num(x,1,999)||null):null;const m=mm(d.m);if(m&&m.some(Boolean))c.m=m;
+ const T=(Array.isArray(d.tees)?d.tees:[]).slice(0,4).map(t=>{t=t||{};const o={name:s(t.name,20)||'Tee',color:tcol(t.name),m:mm(t.m)||[]},cr=num(t.cr,50,90),sr=num(t.sr,55,155);if(cr)o.cr=cr;if(sr)o.sr=sr;return o});
+ if(T.length){c.tees=T;c.tee=T[0].name}else if(d.tee)c.tee=s(d.tee,20);
+ const la=num(it.lat,-90,90),ln=num(it.lng,-180,180);if(la!=null&&ln!=null&&it.lat!=null&&it.lng!=null){c.lat=la;c.lng=ln}return c}catch(e){return null}}
+const dataOf=c=>{const n=c.n||c.par.length,d={v:1,n,par:c.par.slice(0,n),si:c.si.slice(0,n)};
+ if(c.tees&&c.tees.length)d.tees=c.tees.slice(0,4).map(t=>{const o={name:t.name};if(t.cr)o.cr=t.cr;if(t.sr)o.sr=t.sr;if(t.m&&t.m.some(Boolean))o.m=t.m;return o});else if(c.tee)d.tee=c.tee;if(c.m&&c.m.some(Boolean))d.m=c.m;return d};
+let CST='',lastLoad=0,pendMerge=false;
+function mergeCommunity(){if(window.EF){pendMerge=true;return}pendMerge=false;const hid=jget(CK.hid,[]),local=S.courses.filter(c=>c.src!=='community'),cids=new Set(local.map(c=>c.cid).filter(Boolean));
+ const items=((jget(CK.list,{}).list)||[]).map(toCourse).filter(c=>c&&!cids.has(c.cid)&&!hid.includes(c.cid)&&!local.some(l=>sameCourse(l,c)||(!l.town&&sameCourse(l,{name:c.name,town:''}))));
+ items.sort((a,b)=>a.name.localeCompare(b.name));S.courses=local.concat(items)}
+const RR={score:()=>renderScore(),courses:()=>renderCourses(),card:()=>renderCard()};
+function rerender(){const a=document.activeElement;if(a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)||CF)return;(RR[S.tab]||(()=>{}))()}
+async function loadCommunity(){lastLoad=Date.now();try{const l=await TDC.rpc('te_course_list',{});if(Array.isArray(l)){jset(CK.list,{t:Date.now(),list:l});CST='ok';mergeCommunity();rerender()}}catch(e){CST=e.kind||'net'}return CST}
+// queue: courses waiting to be shared (offline / backend not ready) are retried at load, when back online, and every 10 minutes
+const qGet=()=>jget(CK.q,[]),qAdd=l=>{const q=qGet();if(!q.includes(l)){q.push(l);jset(CK.q,q)}},qDel=l=>jset(CK.q,qGet().filter(x=>x!==l));
+async function upload(c){const a={p_name:c.name,p_town:c.town||'',p_data:dataOf(c),p_lat:c.lat==null?null:c.lat,p_lng:c.lng==null?null:c.lng,p_photo:phGet(c.lid),p_wkey:devKey(),p_id:c.cid&&c.mine?c.cid:null};
+ try{const r=await TDC.rpc('te_course_add',a);if(r&&r.id){c.cid=+r.id;c.mine=r.status!=='exists';save();return{ok:true,status:r.status}}return{ok:false,kind:'net'}}catch(e){return{ok:false,kind:e.kind||'net',msg:e.message}}}
+let syncing=null;
+function syncQueue(){if(syncing)return syncing;return syncing=(async()=>{await 0;const res={};try{for(const lid of qGet()){const c=S.courses.find(x=>x.lid===lid);if(!c){qDel(lid);continue}
+  const r=await upload(c);res[lid]=r;if(r.ok)qDel(lid);else if(r.kind==='reject'){qDel(lid);c.shareErr=r.msg;save()}else break}}finally{syncing=null}
+ if(Object.values(res).some(r=>r.ok)){await loadCommunity()}return res})()}
+const shareMsg=r=>!r?'Saved on this phone':r.ok?(r.status==='exists'?'Saved. That course was already on the shared list':'Saved ✓ and shared with everyone'):r.kind==='missing'?'Saved on this phone. Shared list not available yet':r.kind==='reject'?'Saved on this phone. Not shared: '+String(r.msg||'rejected').slice(0,60):'Saved on this phone. Will share when you’re back online';
+// ---- nearby course (one-off lookup; your position is never stored or sent) ----
+const geoOnce=fresh=>new Promise((res,rej)=>{if(!navigator.geolocation)return rej({code:0});navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),e=>rej(e),{enableHighAccuracy:false,timeout:12000,maximumAge:fresh?0:60000})});
+let NB=null;
+function nbShow(html,c,cam){NB=c;const b=$('nearby');b.innerHTML=`<div>${html}</div><div class="btns">${c?`<button onclick="nbUse()">Use this card</button>`:cam?`<button onclick="nbHide();document.getElementById('camIn').click()">📷 Add it</button>`:''}<button class="sec" onclick="nbHide()">${c?'No thanks':'OK'}</button></div>`;b.classList.remove('hidden')}
+window.nbHide=()=>{$('nearby').classList.add('hidden');NB=null};
+window.nbUse=()=>{let i=S.courses.indexOf(NB);if(i<0&&NB)i=S.courses.findIndex(c=>c.name===NB.name);nbHide();if(i>=0){useCourse(i);rerender()}};
+window.findNearby=async manual=>{let pos;try{pos=await geoOnce(manual)}catch(e){if(manual)nbShow(e&&e.code===1?'📍 Location is blocked for TeeDraw. Allow it in your browser settings, or pick your course from the list.':'📍 Couldn’t get your location. Pick your course from the list.');return null}
+ const r=nearestCourse(pos.lat,pos.lng,S.courses,15);pos=null;
+ if(!r){if(manual)nbShow('📍 No saved course near you. Tap 📷 to add it.',null,true);return null}
+ if(r.c.name===S.course.name){if(manual)toast('📍 You’re at '+r.c.name+' – already selected');return r}
+ nbShow(`📍 You seem to be at <b>${esc(r.c.name)}</b> (${r.km<1?'under 1 km':r.km.toFixed(1)+' km'} away). Use this card?`,r.c);return r};
+// ---- entry form ----
+let CF=null;
+window.camPick=async inp=>{const f=inp.files&&inp.files[0];inp.value='';if(!f)return;toast('Preparing photo…');
+ try{const r=await compressImage(f);if(CF){CF.photo=r.url;CF.pchg=1;camPhoto()}else camOpen({photo:r.url,pchg:1})}catch(e){toast('Could not read that photo – try another')}};
+function camOpen(o){CF=Object.assign({lid:null,name:'',town:'',n:18,par:Array(18).fill(''),si:Array(18).fill(''),tees:[{name:'',cr:'',sr:''},{name:'',cr:'',sr:''}],photo:null,loc:false,share:true,title:'Add a course'},o);camRender();$('cam').classList.remove('hidden');document.body.style.overflow='hidden';
+ if(navigator.permissions&&navigator.permissions.query)navigator.permissions.query({name:'geolocation'}).then(p=>{if(p.state==='granted'&&CF&&!CF.lt&&!CF.lid){CF.loc=true;const e=$('c-loc');if(e)e.checked=true}}).catch(()=>{})}
+window.camClose=()=>{if(CF&&!CF.lid&&(CF.name||CF.par.some(v=>v!==''))&&!confirm('Discard this course?'))return;CF=null;$('cam').classList.add('hidden');$('cam').innerHTML='';document.body.style.overflow=''};
+function camPhoto(){$('c-ph').innerHTML=CF.photo?`<img id="c-img" alt="Scorecard photo"><div class="ph-h">Tap the photo to enlarge · pinch to zoom</div>`:'<div class="ph-h" style="padding:20px 0">No photo yet – tap 📷 Retake or 🖼 Gallery</div>';if(CF.photo)$('c-img').src=CF.photo}
+function camGrid(){const n=CF.n,half=h=>{let r='<div class="hr hh"><b></b><b>Par</b><b>SI</b></div>';for(let i=h;i<h+9&&i<n;i++)r+=`<div class="hr"><b>${i+1}</b><input class="cn" id="cp${i}" inputmode="numeric" pattern="[0-9]*" maxlength="1" enterkeyhint="next" autocomplete="off" aria-label="Par hole ${i+1}" value="${CF.par[i]}" oninput="camKey(this,'p',${i})" onfocus="this.select()" onkeydown="camEnter(event,this)"><input class="cn" id="cs${i}" inputmode="numeric" pattern="[0-9]*" maxlength="2" enterkeyhint="next" autocomplete="off" aria-label="Stroke index hole ${i+1}" value="${CF.si[i]}" oninput="camKey(this,'s',${i})" onfocus="this.select()" onkeydown="camEnter(event,this)"></div>`;return `<div><div class="mut" style="text-align:center;font-weight:700">${h?'In (10–18)':n>9?'Out (1–9)':'Holes 1–9'}</div>${r}</div>`};
+ $('c-grid').innerHTML=half(0)+(n>9?half(9):'');camStat()}
+function camRender(){const F=CF;$('cam').innerHTML=`<div class="top"><b>${esc(F.title)}</b><span style="flex:1"></span><button class="sec sm" onclick="document.getElementById('c-ph').classList.toggle('sm')">Photo ⇕</button><button class="sec sm" onclick="camClose()">✕ Cancel</button></div>
+<div class="ph" id="c-ph" onclick="TDC.CF.photo&&viewPhoto(TDC.CF.photo)"></div>
+<div class="card" style="margin:12px">
+ <div class="btns" style="margin:0 0 6px"><button class="sec sm" onclick="document.getElementById('camIn').click()">📷 Retake</button><button class="sec sm" onclick="document.getElementById('galIn').click()">🖼 Gallery</button></div>
+ <div class="mut">Type the details from the photo – TeeDraw can’t read the card automatically, but the photo stays attached to the course. Your keypad jumps to the next box as you type.</div>
+ <label>Course name *</label><input id="c-name" maxlength="60" autocomplete="off" value="${esc(F.name)}" oninput="TDC.CF.name=this.value;camStatW()" placeholder="e.g. Umfolozi Golf Club">
+ <div class="row"><div><label>Town (optional)</label><input id="c-town" maxlength="40" autocomplete="off" value="${esc(F.town)}" oninput="TDC.CF.town=this.value" placeholder="e.g. Mtubatuba"></div><div style="flex:0 0 108px"><label>Holes</label><select id="c-n" onchange="TDC.CF.n=+this.value;camGrid()"><option value="18" ${F.n===18?'selected':''}>18 holes</option><option value="9" ${F.n===9?'selected':''}>9 holes</option></select></div></div>
+ <label>Tees (optional): name, course rating, slope</label>
+ ${[0,1].map(i=>`<div class="row" style="margin-bottom:4px"><input maxlength="20" placeholder="${i?'Red':'White'}" value="${esc(F.tees[i].name)}" aria-label="Tee ${i+1} name" oninput="TDC.CF.tees[${i}].name=this.value"><input inputmode="decimal" placeholder="CR 71.2" style="flex:0 0 90px" value="${esc(F.tees[i].cr)}" aria-label="Tee ${i+1} course rating" oninput="TDC.CF.tees[${i}].cr=this.value"><input inputmode="numeric" placeholder="SR 125" style="flex:0 0 80px" value="${esc(F.tees[i].sr)}" aria-label="Tee ${i+1} slope rating" oninput="TDC.CF.tees[${i}].sr=this.value"></div>`).join('')}
+ <h2 style="margin:12px 0 4px">Par &amp; stroke index</h2><div class="mut" style="margin-bottom:6px">Do all the pars first, then the stroke index (SI).</div>
+ <div class="ce" id="c-grid"></div>
+ <div class="ctot" id="c-tot"></div><div class="cerr" id="c-err"></div>
+ <label class="chk"><input type="checkbox" id="c-share" ${F.share?'checked':''} onchange="TDC.CF.share=this.checked"><span>Share with everyone (adds it to the Community list; the photo is shared too, so only photograph the card, not people)</span></label>
+ <label class="chk"><input type="checkbox" id="c-loc" ${F.loc?'checked':''} onchange="TDC.CF.loc=this.checked;TDC.CF.lt=1"><span>📍 Use my current location as the course location (asks permission once; only the course position is saved, used to find the card when you’re nearby)</span></label>
+ <div class="btns"><button id="c-save" onclick="camSave()">Save course</button></div></div>`;camPhoto();camGrid();}
+const camOrder=()=>{const o=[];for(let i=0;i<CF.n;i++)o.push($('cp'+i));for(let i=0;i<CF.n;i++)o.push($('cs'+i));return o};
+function camNext(el){const o=camOrder(),i=o.indexOf(el);if(i>=0&&i<o.length-1){o[i+1].focus()}else el.blur()}
+window.camGrid=()=>camGrid();window.camStatW=camStat;window.camEnter=(e,el)=>{if(e.key==='Enter'||e.keyCode===13){e.preventDefault();camNext(el)}};
+window.camKey=(el,k,i)=>{let v=el.value.replace(/\D/g,'');v=k==='p'?v.slice(0,1):v.slice(0,2);if(el.value!==v)el.value=v;(k==='p'?CF.par:CF.si)[i]=v===''?'':+v;camStat();
+ clearTimeout(el._t);if(k==='p'?(v>=3&&v<=6):(v.length===2||(v.length===1&&+v*10>CF.n)))camNext(el);else if(k==='s'&&v==='1')el._t=setTimeout(()=>{if(el.value==='1'&&document.activeElement===el)camNext(el)},800)};
+function camStat(){if(!CF||!$('c-tot'))return;const n=CF.n,r=checkCourse(CF.par,CF.si,n);for(let i=0;i<n;i++){$('cp'+i).classList.toggle('bad',r.pb.includes(i));$('cs'+i).classList.toggle('bad',r.sb.includes(i))}
+ $('c-tot').innerHTML=`Par: ${n>9?`Out <b>${r.out}</b> · In <b>${r.inn}</b> · `:''}Total <b>${r.tot}</b>`;
+ const e=r.errs.slice();if(CF.name.trim().length<3)e.unshift('Course name needed');$('c-err').innerHTML=e.length?e.map(x=>'• '+esc(x)).join('<br>'):'✓ Par and stroke index look good';$('c-err').className='cerr'+(e.length?'':' ok')}
+window.camSave=async()=>{const F=CF;if(!F)return;const name=F.name.trim().replace(/\s+/g,' ');if(name.length<3)return toast('Enter the course name');
+ const r=checkCourse(F.par,F.si,F.n);if(!r.ok)return toast(r.errs[0]);
+ const tees=[];for(const t of F.tees){const nm=String(t.name).trim(),cr=String(t.cr).trim(),sr=String(t.sr).trim();if(!nm&&!cr&&!sr)continue;
+  if(cr&&num(cr,50,90)==null)return toast('Course rating (CR) should be between 50 and 90');if(sr&&num(sr,55,155)==null)return toast('Slope (SR) should be between 55 and 155');
+  const o={name:nm||'Tee',color:tcol(nm),m:[]};if(cr)o.cr=num(cr,50,90);if(sr)o.sr=Math.round(num(sr,55,155));tees.push(o)}
+ const b=$('c-save');b.disabled=true;b.textContent='Saving…';let lat=F.lat,lng=F.lng,lf='';
+ if(F.loc){try{const p=await geoOnce();lat=Math.round(p.lat*1e4)/1e4;lng=Math.round(p.lng*1e4)/1e4}catch(e){lf=' (couldn’t get location)'}}
+ const old=F.lid?S.courses.find(c=>c.lid===F.lid):null,c={name,town:F.town.trim(),n:F.n,par:F.par.slice(0,F.n).map(Number),si:F.si.slice(0,F.n).map(Number),lid:F.lid||rid(10)};
+ if(tees.length){c.tees=tees;c.tee=tees[0].name}if(lat!=null&&lng!=null){c.lat=lat;c.lng=lng}if(old){if(old.cid)c.cid=old.cid;if(old.mine!=null)c.mine=old.mine}
+ const dup=!old&&S.courses.find(x=>sameCourse(x,c));
+ if(dup&&confirm(`“${dup.name}” is already on the list. OK = use that one, Cancel = save yours as well.`)){S.course=JSON.parse(JSON.stringify(dup));if(dup.par.length===9)S.holes=9;save();CF=null;$('cam').classList.add('hidden');$('cam').innerHTML='';document.body.style.overflow='';setTab('score');return toast('Using '+dup.name)}
+ if(F.photo&&(F.pchg||!old))if(!phSet(c.lid,F.photo))toast('Photo too big to keep on this phone, but it will still be shared');
+ const i=old?S.courses.indexOf(old):-1;if(i>=0)S.courses[i]=c;else S.courses.push(c);S.course=JSON.parse(JSON.stringify(c));S.holes=F.n===9?9:S.holes;
+ const share=F.share;if(!share)c.private=1;else qAdd(c.lid);save();
+ CF=null;$('cam').classList.add('hidden');$('cam').innerHTML='';document.body.style.overflow='';setTab('score');track('course_added',{holes:c.n});
+ if(!share){toast('Saved on this phone'+lf,3200);return}
+ toast('Saved on this phone ✓'+lf,2200);
+ TDC.last=syncQueue().then(res=>{const m=shareMsg(res[c.lid]||(qGet().includes(c.lid)?{ok:false,kind:'net'}:{ok:true}));toast(m+lf,4200);rerender();return m})};
+window.camEdit=i=>{const c=S.courses[i],t=c.tees||[];camOpen({title:'Correct your course',lid:c.lid,name:c.name,town:c.town||'',n:c.par.length===9?9:18,par:c.par.slice(0,18).concat(Array(18).fill('')).slice(0,18),si:c.si.slice(0,18).concat(Array(18).fill('')).slice(0,18),lat:c.lat,lng:c.lng,share:!c.private,
+ tees:[0,1].map(k=>({name:t[k]?t[k].name:'',cr:t[k]&&t[k].cr||'',sr:t[k]&&t[k].sr||''})),photo:phGet(c.lid)})};
+// photo viewer (pinch / +/- / scroll)
+let LZ=1;const lbApply=()=>{$('lbi').style.width=(100*LZ)+'%'};
+window.viewPhoto=src=>{$('lbx').innerHTML='<div class="lbc"><img id="lbi" alt="Scorecard photo"></div><div class="lbb"><button onclick="lbZ(-.5)" aria-label="Zoom out">−</button><button onclick="lbZ(.5)" aria-label="Zoom in">＋</button><button onclick="lbX()">✕ Close</button></div>';$('lbi').src=src;LZ=1;lbApply();$('lbx').classList.remove('hidden')};
+window.lbZ=d=>{LZ=Math.max(1,Math.min(5,LZ+d));lbApply()};window.lbX=()=>{$('lbx').classList.add('hidden');$('lbx').innerHTML=''};
+{let d0=0,z0=1;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY),L=$('lbx');
+ L.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e.touches);z0=LZ}},{passive:true});
+ L.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){e.preventDefault();LZ=Math.max(1,Math.min(5,z0*dist(e.touches)/d0));lbApply()}},{passive:false});L.addEventListener('touchend',()=>{d0=0})}
+// list actions
+const isComm=c=>c.src==='community'||!!c.cid;
+const photoFor=async c=>{const l=c.lid&&phGet(c.lid);if(l)return l;if(!c.cid||c.ph===false)throw new Error('none');const p=await TDC.rpc('te_course_photo',{p_id:c.cid});if(typeof p!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p))throw new Error('none');return p};
+window.viewCourse=async i=>{try{viewPhoto(await photoFor(S.courses[i]))}catch(e){toast(navigator.onLine?'No photo for this course':'The photo needs a connection')}};
+window.repCourse=async i=>{const c=S.courses[i];if(!confirm('Report “'+c.name+'” as wrong or inappropriate?'))return;
+ try{await TDC.rpc('te_course_report',{p_id:c.cid});const r=jget(CK.rep,[]);r.push(c.cid);jset(CK.rep,r);c.rep=(c.rep||0)+1;toast('Thanks – reported');renderCourses()}catch(e){toast('Could not report right now – try again when online')}};
+window.refreshCourses=async()=>{toast('Refreshing…',1000);await syncQueue();const s=await loadCommunity();toast(s==='ok'?'Shared list updated':s==='missing'?'Shared list not available yet':'Offline – showing saved list',2500);renderCourses()};
+addEventListener('online',()=>{syncQueue();loadCommunity()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastLoad>300000){syncQueue();loadCommunity()}});
+setInterval(()=>{if(!document.hidden){syncQueue();loadCommunity()}},600000);
+mergeCommunity();
+setTimeout(()=>{syncQueue().finally(loadCommunity)},700);
+if(navigator.permissions&&navigator.permissions.query)navigator.permissions.query({name:'geolocation'}).then(p=>{if(p.state==='granted'&&!sessionStorage.td_geo){sessionStorage.td_geo=1;setTimeout(()=>findNearby(false),1200)}}).catch(()=>{});
+Object.assign(TDC,{compressImage,toCourse,syncQueue,loadCommunity,mergeCommunity,camOpen,camPhoto,dataOf,qGet,CK,devKey,phGet,upload,applyDay});Object.defineProperty(TDC,'CF',{get:()=>CF});
 
 window.saveForm=()=>{const c=readForm();if(!c.name)return toast('Enter a club name');const n=c.par.length;
  if(new Set(c.si).size!==n||c.si.some(v=>v<1||v>n))return toast('Stroke index must use 1–'+n+' once each');
