@@ -12,7 +12,7 @@
 :root{--g:#14532d;--g2:#166534;--g3:#22c55e;--bg:#f1f5ee;--card:#fff;--ink:#1a2e1f;--mut:#64748b;--red:#b91c1c;--r:14px}
 *{box-sizing:border-box}html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 header{background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px}
-header h1{font-size:20px;margin:0;letter-spacing:.3px}header .pro{margin-left:auto;font-size:11px;background:#facc15;color:#422006;padding:3px 8px;border-radius:99px;font-weight:700;border:0}
+header h1{font-size:20px;margin:0;letter-spacing:.3px}header .sug{margin-left:auto;font-size:16px;background:#fff3;color:#fff;padding:2px 9px;border-radius:99px;border:0;line-height:1.4}header .sug+.pro{margin-left:8px}header .pro{margin-left:auto;font-size:11px;background:#facc15;color:#422006;padding:3px 8px;border-radius:99px;font-weight:700;border:0}
 main{max-width:640px;margin:0 auto;padding:12px}
 .card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:0 1px 3px #0001}
 h2{font-size:16px;margin:0 0 10px}label{font-size:13px;color:var(--mut);display:block;margin:8px 0 4px}
@@ -85,8 +85,14 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink);margin:10px 0 0}.chk input{width:22px;height:22px;flex:none;padding:0;margin:0}
 .lbx{position:fixed;inset:0;background:#000;z-index:40}.lbx .lbc{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}.lbx img{display:block;max-width:none;margin:0 auto}.lbx .lbb{position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:6px;z-index:2}.lbx .lbb button{background:#000a;border:1px solid #fff6;min-width:44px;padding:8px 12px}
 .tag{font-size:10px;background:#dbeafe;color:#1e40af;border-radius:99px;padding:1px 7px;font-weight:600;vertical-align:middle;margin-left:4px}.lk{background:none;color:#1d4ed8;padding:4px 8px 4px 0;font-size:13px;font-weight:500}#nearby{border:2px solid var(--g3)}
+.mdl{position:fixed;inset:0;background:#0007;z-index:60;display:flex;align-items:flex-end;justify-content:center}.mdl.hidden{display:none}
+.mdl .sheet{background:var(--card);width:100%;max-width:520px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px;box-shadow:0 -4px 20px #0004}
+.mdl .sheet h2{margin:0 0 6px}.implist{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;max-height:34vh;overflow:auto}.implist .chip{font-size:13px}
+.club{border:1px solid #dfe7da;border-radius:12px;padding:10px;margin-bottom:8px}.club .code{font-family:ui-monospace,Menlo,monospace;font-size:20px;letter-spacing:1px;font-weight:700;margin:2px 0}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px;background:#e8eee5;color:#385}.badge.org{background:var(--g);color:#fff}
+.bigcode{font-family:ui-monospace,Menlo,monospace;font-size:28px;font-weight:800;letter-spacing:2px;text-align:center;padding:14px 4px;background:#f1f6ee;border-radius:12px;margin:10px 0;word-break:break-all}
 </style></head><body>
-<header><svg id="logo" onclick="logoTap()" style="cursor:pointer" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 21V3l10 4-10 4"/><ellipse cx="10" cy="21" rx="7" ry="1.5"/></svg><h1>TeeDraw</h1><button class="pro" onclick="proInfo()">PRO soon</button></header>
+<header><svg id="logo" onclick="logoTap()" style="cursor:pointer" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 21V3l10 4-10 4"/><ellipse cx="10" cy="21" rx="7" ry="1.5"/></svg><h1>TeeDraw</h1><button class="sug" onclick="sugOpen()" aria-label="Suggest a feature" title="Suggest a feature">💡</button><button class="pro" onclick="proInfo()">PRO soon</button></header>
 <div id="inst" class="hidden"></div>
 <main>
 <div class="card hidden" id="nearby"></div>
@@ -105,12 +111,19 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
    <div class="btns"><button class="sec" onclick="rImport()">Import into my players</button></div>
   </details>
  </div>
+ <div class="card" id="sharecard"><h2>Share players</h2>
+  <div class="mut">Send your saved list to friends: they tap the link and choose Merge or Replace. Works offline once TeeDraw is installed.</div>
+  <div class="btns"><button onclick="rShareLink()">🔗 Share player list</button><button class="sec" onclick="rCopyLink()">Copy link</button></div><div class="mut" id="rlinkinfo"></div>
+  <h2 style="margin-top:16px">Club codes</h2><div class="mut">A club code (like MONZI-4K7Q-R9TW) lets members load the same player list, and the current round, on any phone. Only the organiser can change the list.</div>
+  <div id="clubs" style="margin-top:8px"></div>
+  <div class="btns"><button class="sec" onclick="clubForm('join')">Enter a club code</button><button class="sec" onclick="clubForm('new')">Create a club</button></div><div id="clubform"></div></div>
  <div class="card"><h2>Extra players today <span class="mut" id="pc"></span></h2>
   <div class="row"><input id="pname" placeholder="Player name" enterkeyhint="done"><button style="flex:0 0 auto" onclick="addOne()">Add</button></div>
   <label>Or paste a list (one per line)</label><textarea id="plist" placeholder="Mark&#10;Sipho&#10;Johan"></textarea>
   <div class="btns"><button class="sec" onclick="addList()">Add list</button><button class="sec" onclick="clearPlayers()">Clear all</button></div>
   <div class="chips" id="chips" style="margin-top:12px"></div></div>
- <div class="card"><details><summary><b>About &amp; privacy</b></summary><p class="mut">TeeDraw stores your players, draws and scores only on this phone. If anonymous usage stats are switched on, we count things like "a draw was made with 12 players in 3 groups" or "a round was finished at Monzi", plus a rough country/region worked out from the connection. Live events (optional): if you create or join an event and live sharing is set up, that event’s first names/nicknames, course handicaps, tee times and scores are stored online so people with the event link or QR can watch. Event codes are random (about 100 bits), never listed, and only people with the separate scorer link can change scores. Use first names or nicknames only – no surnames or phone numbers. Without live setup, events stay on this phone. We never send player names, phone numbers, scores per person or anything that identifies you, and we use no cookies and no tracking across other sites. This helps us show sponsors how many golfers use the app. Community courses: if you add a course from a scorecard photo and leave “Share with everyone” ticked, the course name, town, pars, stroke index, optional tee ratings, the photo and (only if you tick it) the course’s location are stored online and shown to all TeeDraw users; a random key kept on your phone lets only you correct your own entry. Photograph only the printed card, not people. “Find nearby course” reads your position once to compare it with saved courses on your phone; it is never stored or sent. Questions: contact the TeeDraw team.</p></details></div>
+ <div class="card" id="sugcard"><div class="row" style="align-items:center"><div style="flex:1"><b>💡 Got an idea?</b><div class="mut">Tell us what TeeDraw should do next.</div></div><button class="sec" style="flex:0 0 auto" onclick="sugOpen()">Suggest a feature</button></div></div>
+ <div class="card"><details><summary><b>About &amp; privacy</b></summary><p class="mut">TeeDraw stores your players, draws and scores only on this phone. If anonymous usage stats are switched on, we count things like "a draw was made with 12 players in 3 groups" or "a round was finished at Monzi", plus a rough country/region worked out from the connection. Live events (optional): if you create or join an event and live sharing is set up, that event’s first names/nicknames, course handicaps, tee times and scores are stored online so people with the event link or QR can watch. Event codes are random (about 100 bits), never listed, and only people with the separate scorer link can change scores. Use first names or nicknames only – no surnames or phone numbers. Without live setup, events stay on this phone. We never send player names, phone numbers, scores per person or anything that identifies you, and we use no cookies and no tracking across other sites. This helps us show sponsors how many golfers use the app. Community courses: if you add a course from a scorecard photo and leave “Share with everyone” ticked, the course name, town, pars, stroke index, optional tee ratings, the photo and (only if you tick it) the course’s location are stored online and shown to all TeeDraw users; a random key kept on your phone lets only you correct your own entry. Photograph only the printed card, not people. “Find nearby course” reads your position once to compare it with saved courses on your phone; it is never stored or sent. Sharing: a player-list link carries the names and handicaps inside the link itself (nothing is stored online). A club code (optional) stores the club name and a list of first names with handicaps online, readable by anyone who has the random code and changeable only with the organiser’s key. A shared round’s course, draw, handicaps and team settings are stored with the live event, and scorers use a separate scorer key that can write scores but cannot change the setup. Suggestions: if you send one, the text, the optional name/contact you typed, a category, the app version and a random device code (to limit spam) are stored and read by the TeeDraw team – don’t include personal info. Questions: contact the TeeDraw team.</p></details></div>
  <div class="ad" data-slot="banner-players">Sponsor / ad space<br><small>Your club or pro shop here</small></div>
 </section>
 <!-- DRAW -->
@@ -173,7 +186,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
   <label>Club / course name</label><input id="f-name"><div class="row"><div><label>Tee / colour</label><input id="f-tee" placeholder="White"></div><div><label>Holes</label><select id="f-holes" onchange="buildForm()"><option value="18">18 holes</option><option value="9">9 holes</option><option value="9x2">9 holes played twice (2nd-nine par/SI)</option></select></div></div>
   <div class="mut" style="margin:8px 0">Distance is optional (metres).</div>
   <div class="form-holes" id="f-grid"></div>
-  <div class="btns"><button onclick="saveForm()">Save course</button><button class="sec" onclick="$('cform').classList.add('hidden')">Cancel</button></div></div>
+  <div class="btns"><button onclick="saveForm()">Save course</button><button class="sec" onclick="document.getElementById('cform').classList.add('hidden')">Cancel</button></div></div>
 </section>
 <section id="v-event" class="hidden"><div id="evb"></div></section>
 <section id="v-live" class="hidden"><div class="card" id="lvb"></div></section>
@@ -259,7 +272,47 @@ function checkCourse(par,si,n){n=n||par.length;const e=[],pb=[],sb=[];let filled
  return{ok:!e.length,errs:e,pb,sb,out:sum(pa.slice(0,9)),inn:n>9?sum(pa.slice(9,18)):0,tot:sum(pa)}}
 function haversineKm(a,b,c,d){const R=6371,r=x=>x*Math.PI/180,dl=r(c-a),dn=r(d-b),h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
 function nearestCourse(lat,lng,list,maxKm){maxKm=maxKm||15;let best=null;list.forEach((c,i)=>{if(!isFinite(c.lat)||!isFinite(c.lng)||c.lat==null||c.lng==null)return;const d=haversineKm(lat,lng,+c.lat,+c.lng);if(d<=maxKm&&(!best||d<best.km))best={i,c,km:d}});return best}
-if(typeof module!=='undefined')module.exports={normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard,nineSlice,nineLabel};
+// ---------- sharing (pure, testable): roster codec = inline LZ + base64url, merge/replace, club codes, share routes ----------
+const B64U='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_',B64I={};for(let i=0;i<64;i++)B64I[B64U[i]]=i;
+function b64uEnc(u){let s='';for(let i=0;i<u.length;i+=3){const a=u[i],b=u[i+1]||0,c=u[i+2]||0,n=(a<<16)|(b<<8)|c;s+=B64U[n>>18&63]+B64U[n>>12&63]+(i+1<u.length?B64U[n>>6&63]:'')+(i+2<u.length?B64U[n&63]:'')}return s}
+function b64uDec(s){s=String(s);if(/[^A-Za-z0-9_-]/.test(s)||s.length%4===1)return null;const o=[];for(let i=0;i<s.length;i+=4){const a=B64I[s[i]],b=B64I[s[i+1]],c=i+2<s.length?B64I[s[i+2]]:0,d=i+3<s.length?B64I[s[i+3]]:0,n=(a<<18)|(b<<12)|(c<<6)|d;o.push(n>>16&255);if(i+2<s.length)o.push(n>>8&255);if(i+3<s.length)o.push(n&255)}return Uint8Array.from(o)}
+// tiny LZ77: control byte <128 = literal run of (c+1) bytes; >=128 = copy of (c&127)+3 bytes from a varint distance back
+function lzc(u){const out=[];let lit=[];const flush=()=>{while(lit.length){const k=lit.splice(0,128);out.push(k.length-1);for(const x of k)out.push(x)}};let i=0;
+ while(i<u.length){let bl=0,bo=0;for(let j=Math.max(0,i-4096);j<i;j++){let l=0;while(l<130&&i+l<u.length&&u[j+l]===u[i+l])l++;if(l>bl){bl=l;bo=i-j}}
+  if(bl>=4){flush();out.push(0x80|(bl-3));let o=bo;while(o>=128){out.push((o&127)|128);o>>=7}out.push(o);i+=bl}else{lit.push(u[i]);i++}}
+ flush();return Uint8Array.from(out)}
+function lzd(u,max){const out=[];let i=0;while(i<u.length){const c=u[i++];if(c<128){const n=c+1;if(i+n>u.length)return null;for(let k=0;k<n;k++)out.push(u[i++])}
+  else{const n=(c&127)+3;let o=0,sh=0,b;do{if(i>=u.length)return null;b=u[i++];o|=(b&127)<<sh;sh+=7}while((b&128)&&sh<21);if(!o||o>out.length)return null;for(let k=0;k<n;k++)out.push(out[out.length-o])}
+  if(out.length>max)return null}return Uint8Array.from(out)}
+const shLc=x=>String(x).trim().toLowerCase();
+function shName(n){return String(n==null?'':n).replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,40)}
+function shHi(v){if(v===''||v==null)return '';const x=parseFloat(String(v).trim().replace(',','.').replace(/^\+/,'-'));return isNaN(x)?'':Math.max(-10,Math.min(54,Math.round(x*10)/10))}
+function rosterClean(list){const seen=new Set(),out=[];for(const r of Array.isArray(list)?list:[]){const n=shName(r&&r.n);if(!n||seen.has(shLc(n)))continue;seen.add(shLc(n));out.push({n,hi:shHi(r.hi)})}return out}
+const ROSTER_MAX=300;
+// payload = '1'|'2' (raw|lz) + base64url of UTF-8 text "Name\tHI\nName\tHI". The shorter of raw / lz is used.
+function rosterEncode(list){const L=rosterClean(list).slice(0,ROSTER_MAX),txt=L.map(r=>r.n+(r.hi===''?'':'\t'+r.hi)).join('\n'),raw=new TextEncoder().encode(txt),z=lzc(raw);return z.length<raw.length?'2'+b64uEnc(z):'1'+b64uEnc(raw)}
+function rosterDecode(p){p=String(p||'');if(p.length<1||p.length>24000)return null;const v=p[0],u=b64uDec(p.slice(1));if(!u)return null;let raw=v==='1'?u:v==='2'?lzd(u,40000):null;if(!raw)return null;let t;try{t=new TextDecoder('utf-8',{fatal:true}).decode(raw)}catch(e){return null}
+ const out=[];for(const line of t.split('\n').slice(0,ROSTER_MAX)){const[n,h]=line.split('\t');out.push({n,hi:h})}return rosterClean(out)}
+function rosterURL(base,list){return base+'#/roster='+rosterEncode(list)}
+function rosterMerge(mine,inc,mode){const L=rosterClean(inc),M=rosterClean(mine);let out,added=0,filled=0,removed=0;
+ if(mode==='replace'){out=L.map(x=>({n:x.n,hi:x.hi}));added=L.filter(x=>!M.some(m=>shLc(m.n)===shLc(x.n))).length;removed=M.filter(m=>!L.some(x=>shLc(x.n)===shLc(m.n))).length}
+ else{out=M.map(r=>({n:r.n,hi:r.hi}));for(const x of L){const i=out.findIndex(r=>shLc(r.n)===shLc(x.n));if(i<0){out.push({n:x.n,hi:x.hi});added++}else if(out[i].hi===''&&x.hi!==''){out[i].hi=x.hi;filled++}}}
+ out.sort((a,b)=>a.n.localeCompare(b.n));return{list:out,added,filled,removed}}
+// club codes: [PREFIX from the club name, <=5 letters] + 8 random chars from a 32-letter unambiguous alphabet (no 0/O/1/L) = 40 random bits, shown as MONZI-4K7Q-R9TW
+const CODE_AL='ABCDEFGHIJKMNPQRSTUVWXYZ23456789';
+function clubNorm(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
+function clubOk(c){return /^[A-Z0-9]{8,24}$/.test(c)}
+function clubGen(name,rnd){const pre=String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,5);let r='';for(const x of rnd(8))r+=CODE_AL[x&31];return pre+r}
+function clubFmt(c){c=clubNorm(c);if(c.length<8)return c;const p=c.slice(0,-8),r=c.slice(-8);return(p?p+'-':'')+r.slice(0,4)+'-'+r.slice(4)}
+// what is stored for a club: names + handicap indexes only, plus an optional pointer to the current live round
+function clubPack(list,round){return{v:1,p:rosterClean(list).slice(0,ROSTER_MAX).map(r=>r.hi===''?[r.n]:[r.n,r.hi]),r:round&&/^[a-z0-9]{16,64}$/.test(round.id||'')?{i:round.id,...(/^[a-z0-9]{16,64}$/.test(round.k||'')?{k:round.k}:{})}:null}}
+function clubUnpack(d){if(!d||typeof d!=='object'||!Array.isArray(d.p))return null;const players=rosterClean(d.p.slice(0,ROSTER_MAX).map(x=>Array.isArray(x)?{n:x[0],hi:x[1]}:null).filter(Boolean));
+ const r=d.r&&typeof d.r==='object'&&/^[a-z0-9]{16,64}$/.test(d.r.i||'')?{id:d.r.i,k:/^[a-z0-9]{16,64}$/.test(d.r.k||'')?d.r.k:''}:null;return{players,round:r}}
+function shareRoute(h){h=String(h||'');let m;
+ if(m=h.match(/^#\/?roster=([A-Za-z0-9_-]+)/))return{t:'roster',v:m[1]};
+ if(m=h.match(/^#\/?club=([A-Za-z0-9-]+)(?:\.([A-Za-z0-9]{16,64}))?/)){const c=clubNorm(m[1]);return clubOk(c)?{t:'club',code:c,ek:m[2]||''}:{t:'club',code:'',bad:1}}
+ if(m=h.match(/^#\/?round=([a-z0-9]{16,64})(?:\.([a-z0-9]{16,64}))?/))return{t:'round',id:m[1],k:m[2]||''};return null}
+if(typeof module!=='undefined')module.exports={b64uEnc,b64uDec,lzc,lzd,rosterClean,rosterEncode,rosterDecode,rosterURL,rosterMerge,clubNorm,clubOk,clubGen,clubFmt,clubPack,clubUnpack,shareRoute,CODE_AL,normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard,nineSlice,nineLabel};
 </script>
 <script>
 if(typeof document!=='undefined'){
@@ -334,10 +387,10 @@ window.rCopy=async()=>{if(!R.length){toast('No saved players yet');return}const 
 window.rShare=()=>{if(!R.length){toast('No saved players yet');return}const t=rosterText();if(navigator.share&&/Android|iPhone|iPad/i.test(navigator.userAgent))navigator.share({text:t}).catch(()=>{});else wa(t)};
 function parseRoster(t){const out=[];for(let l of String(t).split(/\r?\n/)){l=l.trim().replace(/^[-*•\d]+[.)]?\s+/,'');if(!l||/^teedraw players$/i.test(l))continue;let m=l.match(/^(.*?)[\s,;:\t(]+(\+?-?\d+(?:[.,]\d)?)\)?\s*$/),n=m?m[1]:l,hi=m?parseHI(m[2]):'';n=n.replace(/[,;:\s]+$/,'').trim();if(n)out.push({n,hi})}return out}
 window.rImport=()=>{const L=parseRoster($('rimp').value);if(!L.length){toast('Nothing to import');return}let a=0,u=0;for(const x of L){const i=R.findIndex(r=>lc(r.n)===lc(x.n));if(i<0){R.push(x);a++}else if(x.hi!==''){R[i].hi=x.hi;u++}}R.sort((a,b)=>a.n.localeCompare(b.n));rStore();$('rimp').value='';renderPlayers();toast(a+' added'+(u?', '+u+' updated':''))};
-window.TDR={get R(){return R},get T(){return T},pool,inR,isT,rosterText,parseRoster};
+window.TDR={get R(){return R},get T(){return T},rStore,renderPlayers,pool,inR,isT,rosterText,parseRoster};
 function renderRoster(){const c=R.filter(r=>isT(r.n)).length;$('rcount').textContent=c+' of '+R.length+' ticked';
  $('rlist').innerHTML=R.map((r,i)=>`<div class="rli"><input type="checkbox" id="rk${i}" ${isT(r.n)?'checked':''} onchange="rTick(${i},this.checked)"><label for="rk${i}">${esc(r.n)}${r.hi!==''&&r.hi!=null?` <small>HI ${r.hi<0?'+'+(-r.hi):r.hi}</small>`:''}</label><button class="ic" aria-label="Edit ${esc(r.n)}" onclick="rEdit(${i})">✎</button><button class="ic del" aria-label="Delete ${esc(r.n)}" onclick="rDel(${i})">🗑</button></div>`).join('')||'<div class="mut" style="padding:10px 0">No saved players yet. Add your regulars below, or tap “Save” on names you paste.</div>'}
-function renderPlayers(){renderRoster();const G=S.players.map((p,i)=>[p,i]).filter(([p])=>!inR(p));
+function renderPlayers(){renderRoster();if(window.SHARE_READY){renderClubs();rLinkInfo()}const G=S.players.map((p,i)=>[p,i]).filter(([p])=>!inR(p));
  $('pc').textContent='('+G.length+') · playing today: '+pool().length;
  $('chips').innerHTML=G.map(([p,i])=>`<span class="chip"><b>${esc(p)}</b><button class="sv" aria-label="Save ${esc(p)} to my players" onclick="saveGuest(${i})">💾 Save</button><button aria-label="remove" onclick="rmP(${i})">×</button></span>`).join('')+(G.length>1?`<button class="sec sm" onclick="saveAllGuests()">Save all to my players</button>`:'')||'<span class="mut">None – tick saved players above, or add one-off names here.</span>'}
 // draw
@@ -350,8 +403,8 @@ function ao(){return isBack()&&S.course.par.length>=18?9:0} // offset into the c
 function nineName(){if(S.holes!==9)return'';if(S.course.par.length>=18)return S.nine==='back'?'Back 9':'Front 9';return S.course.half==='back'?'Back 9':S.course.half==='front'?'Front 9':''}
 function nameTag(){const n=nineName();return n?' · '+n:''}
 function hasScores(){return S.groups.flat().some(p=>(S.scores[p]||[]).some(Boolean))}
-function dayC(c,n,nine){const f=cfix(c,n),z=nineSlice(f.par,f.si,n,nine),o={name:c.name,par:z.par,si:z.si,n};if(z.nine)o.nine=z.nine;if(c.tees&&c.tees.length)o.tees=c.tees.slice(0,4).map(t=>({name:t.name,color:t.color,cr:t.cr,sr:t.sr}));return o}
-function setHoles(v){const ns=nineSel(),h=v==='f'||v==='b'?9:+v,nn=v==='b'?'back':v==='f'?'front':S.nine,nl=h===9&&ns&&nn==='back'?9:0;
+function dayC(c,n,nine){const f=cfix(c,n),z=nineSlice(f.par,f.si,n,nine),o={name:c.name,par:z.par,si:z.si,n};if(z.nine)o.nine=z.nine;const a=z.nine==='back'?9:0,sl=m=>Array.isArray(m)&&m.length?m.slice(a,a+n).map(v=>+v||0):undefined;if(c.tees&&c.tees.length)o.tees=c.tees.slice(0,4).map(t=>{const x={name:t.name,color:t.color,cr:t.cr,sr:t.sr},m=sl(t.m);if(m)x.m=m;return x});const cm=sl(c.m);if(cm)o.m=cm;return o}
+function setHoles(v){if(locked())return noEdit();const ns=nineSel(),h=v==='f'||v==='b'?9:+v,nn=v==='b'?'back':v==='f'?'front':S.nine,nl=h===9&&ns&&nn==='back'?9:0;
  if(h===S.holes&&nl===lo())return;
  if(nl!==lo()&&hasScores()){if(!confirm('Changing the nine (or switching to/from 18) clears the scores entered so far. Continue?'))return;S.scores={};S.started=S.finished=false;S.evLS={}}
  S.holes=h;if(h===9&&ns)S.nine=nn;S.ch=Math.min(S.ch,S.holes-1);
@@ -360,13 +413,13 @@ function setHoles(v){const ns=nineSel(),h=v==='f'||v==='b'?9:+v,nn=v==='b'?'back
 function renderDraw(){
  const ns=nineSel();seg('seg-holes',ns?[[18,'18 holes'],['f','Front 9'],['b','Back 9']]:[[18,'18 holes'],[9,'9 holes']],S.holes===18?18:ns?(isBack()?'b':'f'):9,setHoles);
  $('nine-hint').textContent=S.holes!==9?'':ns?(isBack()?'Back 9 = holes 10–18 of ':'Front 9 = holes 1–9 of ')+S.course.name+'. Handicap is halved and stroke index is ranked within the nine.':'9-hole card: holes 1–9.';
- seg('seg-size',[['auto','Auto'],[4,'4-ball'],[3,'3-ball'],[2,'2-ball']],S.size,v=>{S.size=v;save();renderDraw()});
+ seg('seg-size',[['auto','Auto'],[4,'4-ball'],[3,'3-ball'],[2,'2-ball']],S.size,v=>{if(locked())return noEdit();S.size=v;save();renderDraw()});
  $('tstart').value=S.tstart;$('tint').value=S.tint;
  $('groups').innerHTML=S.groups.map((g,i)=>`<div class="card grp"><h3><span>Group ${i+1}</span><span>⛳ ${addMin(S.tstart,i*S.tint)}</span></h3><ol>${g.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`).join('');
  $('drawact').classList.toggle('hidden',!S.groups.length);
 }
-$('tstart').onchange=e=>{S.tstart=e.target.value||'07:30';save();renderDraw()};$('tint').onchange=e=>{S.tint=Math.max(0,+e.target.value||0);save();renderDraw()};
-window.randomise=()=>{const P=pool();if(P.length<2){toast('Tick or add at least 2 players');setTab('players');return}
+$('tstart').onchange=e=>{if(locked()){renderDraw();return noEdit()}S.tstart=e.target.value||'07:30';save();renderDraw()};$('tint').onchange=e=>{if(locked()){renderDraw();return noEdit()}S.tint=Math.max(0,+e.target.value||0);save();renderDraw()};
+window.randomise=()=>{if(locked())return noEdit();const P=pool();if(P.length<2){toast('Tick or add at least 2 players');setTab('players');return}
  if(S.groups.length&&Object.keys(S.scores).length&&!confirm('Reshuffle clears scores. Continue?'))return;
  S.groups=makeGroups(P,S.size);S.hi=S.hi||{};P.forEach(p=>{const r=R.find(r=>r.n===p);if(r&&r.hi!==''&&r.hi!=null&&(S.hi[p]==null||S.hi[p]===''))S.hi[p]=r.hi});if(typeof recalcCH==='function')recalcCH();S.scores={};S.started=S.finished=false;track('draw_made',{players:P.length,groups:S.groups.length,holes:S.holes,size:String(S.size)});S.cg=0;S.ch=0;save();renderDraw();history.replaceState(null,'',link())};
 function drawText(){return `⛳ *TeeDraw – ${S.course.name}* (${S.holes===9?(nineName()||'9 holes'):S.holes+' holes'})\n\n`+S.groups.map((g,i)=>`*Group ${i+1}* – ${addMin(S.tstart,i*S.tint)}\n`+g.map(p=>'• '+p).join('\n')).join('\n\n')+`\n\nOpen the draw & scorecard:\n${link()}`}
@@ -385,7 +438,7 @@ function renderCourse(){
  const p=cpar(),o=p.slice(0,9).reduce((a,b)=>a+b,0);$('partot').textContent=`Par ${p.reduce((a,b)=>a+b,0)}`+(S.holes===18?` (Out ${o} · In ${p.slice(9).reduce((a,b)=>a+b,0)})`:nineName()?` (${nineName()}, holes ${1+LO}–${9+LO})`:'');
 }
 document.addEventListener('change',e=>{const k=e.target.dataset?.k;if(!k)return;const v=parseInt(e.target.value);if(v>0&&v<=(k==='par'?7:18)){S.course[k][+e.target.dataset.i]=v;save();renderScore()}else e.target.value=S.course[k][+e.target.dataset.i]});
-window.pickCourse=()=>{const c=S.courses[+$('courseSel').value];if(c){S.course=JSON.parse(JSON.stringify(c));save();renderScore()}};
+window.pickCourse=()=>{if(locked()){renderScore();return noEdit()}const c=S.courses[+$('courseSel').value];if(c){S.course=JSON.parse(JSON.stringify(c));save();renderScore()}};
 window.saveCourse=()=>{const i=S.courses.findIndex(c=>c.name===S.course.name);const c=JSON.parse(JSON.stringify(S.course));delete c.half;if(i>=0)S.courses[i]=c;else S.courses.push(c);save();renderCourse();toast('Course saved')};
 // scoring
 const sc=(p)=>S.scores[p]||(S.scores[p]=[]);
@@ -393,9 +446,9 @@ function tot(p){const s=sc(p),par=cpar(),si=csi();let g=0,pp=0,net=0,th=0,pts=0;
 const rel=v=>v===0?'E':(v>0?'+'+v:''+v),cls=v=>v<0?'under':v>0?'over':'';
 window.go=d=>{S.ch=(S.ch+d+S.holes)%S.holes;save();renderScore()};
 window.hole=h=>{S.ch=h;save();renderScore()};
-window.st=(i,d)=>{const g=S.groups[S.cg],p=g[i],s=sc(p),par=cpar()[S.ch];s[S.ch]=s[S.ch]?Math.max(1,Math.min(15,s[S.ch]+d)):par+(d>0?0:-1);save();renderScore()};
-window.clr=i=>{const p=S.groups[S.cg][i];sc(p)[S.ch]=null;save();renderScore()};
-window.setH=(p,v)=>{S.hcp[p]=Math.max(0,Math.min(54,+v||0));save();renderScore()};
+window.st=(i,d)=>{if(ro())return noEdit();const g=S.groups[S.cg],p=g[i],s=sc(p),par=cpar()[S.ch];s[S.ch]=s[S.ch]?Math.max(1,Math.min(15,s[S.ch]+d)):par+(d>0?0:-1);save();renderScore()};
+window.clr=i=>{if(ro())return noEdit();const p=S.groups[S.cg][i];sc(p)[S.ch]=null;save();renderScore()};
+window.setH=(p,v)=>{if(ro())return noEdit();S.hcp[p]=Math.max(0,Math.min(54,+v||0));save();renderScore()};
 function renderScore(){
  renderCourse();
  if(!S.groups.length){$('prows').innerHTML='<p class="mut">Randomise a draw first.</p>';$('gsel').innerHTML='';$('gcard').innerHTML='';$('dots').innerHTML='';$('hcps').innerHTML='';return}
@@ -433,11 +486,11 @@ const tees=()=>S.course.tees&&S.course.tees.length?S.course.tees:[{name:S.course
 const ptee=p=>{const t=tees();return t[Math.min((S.ptee||{})[p]||0,t.length-1)]};
 function chFrom(hi,t){if(hi===''||hi==null||isNaN(hi))return 0;const par=S.course.par.slice(0,18).reduce((a,b)=>a+b,0);return S.whs&&t.sr?Math.max(0,Math.round(hi*t.sr/113+((t.cr||par)-par))):Math.max(0,Math.round(+hi))}
 window.recalcCH=()=>{if(!S.whs)return;S.groups.flat().forEach(p=>{if((S.hi||{})[p]!=null&&S.hi[p]!=='')S.hcp[p]=chFrom(+S.hi[p],ptee(p))})};
-window.setHI=(pi,v)=>{const p=S.groups[S.cg][pi];S.hi=S.hi||{};S.hi[p]=v===''?'':Math.max(-10,Math.min(54,parseFloat(v)||0));if(S.whs&&S.hi[p]!=='')S.hcp[p]=chFrom(S.hi[p],ptee(p));save();renderCard()};
+window.setHI=(pi,v)=>{if(ro())return noEdit();const p=S.groups[S.cg][pi];S.hi=S.hi||{};S.hi[p]=v===''?'':Math.max(-10,Math.min(54,parseFloat(v)||0));if(S.whs&&S.hi[p]!=='')S.hcp[p]=chFrom(S.hi[p],ptee(p));save();renderCard()};
 window.setCH=(pi,v)=>{setH(S.groups[S.cg][pi],v);renderCard()};
-window.cycTee=pi=>{const p=S.groups[S.cg][pi];S.ptee=S.ptee||{};S.ptee[p]=(((S.ptee[p]||0)+1)%tees().length);if(S.whs&&(S.hi||{})[p]!=null&&S.hi[p]!=='')S.hcp[p]=chFrom(S.hi[p],ptee(p));save();renderCard()};
+window.cycTee=pi=>{if(ro())return noEdit();const p=S.groups[S.cg][pi];S.ptee=S.ptee||{};S.ptee[p]=(((S.ptee[p]||0)+1)%tees().length);if(S.whs&&(S.hi||{})[p]!=null&&S.hi[p]!=='')S.hcp[p]=chFrom(S.hi[p],ptee(p));save();renderCard()};
 const gfmt=()=>{S.tf=S.tf||{};return S.tf[S.cg]||{f:'best2',k:2}};
-window.setFmt=(f,k)=>{const o=gfmt();S.tf[S.cg]={f:f||o.f,k:k||o.k};save();renderCard();renderBoardIfOpen()};
+window.setFmt=(f,k)=>{if(locked())return noEdit();const o=gfmt();S.tf[S.cg]={f:f||o.f,k:k||o.k};save();renderCard();renderBoardIfOpen()};
 function ptsGrid(g){const par=cpar(),si=csi();return g.map(p=>{const s=sc(p);return [...Array(S.holes).keys()].map(h=>s[h]?stbl(s[h],par[h],shots(p,h,si)):null)})}
 function groupTeam(gi){const g=S.groups[gi],P=ptsGrid(g),o=(S.tf||{})[gi]||{f:'best2',k:2};const per=[...Array(S.holes).keys()].map(h=>teamHole(P.map(r=>r[h]),o.f,o.k,g.length));return{per,o,tot:per.reduce((a,b)=>a+(b||0),0),thru:per.filter(v=>v!=null).length}}
 const fmtLabel=o=>({best2:'B/B (best 2)',best1:'Better ball',alliance:'Alliance ('+o.k+' count)',avg:'Group average'})[o.f];
@@ -506,7 +559,7 @@ function renderNotes(g,P){const sk=skins(P,S.carry!==false,lo());const tot={unit
 window.openPad=(pi,h)=>{padP=pi;padH=h;const p=S.groups[S.cg][pi],par=cpar()[h];
  $('pad').innerHTML=`<div class="row"><b style="flex:2">${esc(p)} · Hole ${h+1+lo()} <span class="mut">Par ${par}</span></b><button class="sec sm" style="flex:0" onclick="closePad()">Done</button></div><div class="pg">${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button class="${v===par?'':'sec'}" onclick="padSet(${v})">${v}</button>`).join('')}<button class="sec" onclick="padSet(+prompt('Strokes (10+)',11)||null)">10+</button><button class="sec" onclick="padSet(null)">Clear</button><button class="sec" onclick="padMove(-1)">◀</button><button class="sec" onclick="padMove(1)" style="grid-column:span 2">Next ▶</button></div>`;
  $('pad').classList.remove('hidden');renderCard()};
-window.padSet=v=>{const p=S.groups[S.cg][padP];sc(p)[padH]=v&&v>0?Math.min(v,20):null;save();padMove(1)};
+window.padSet=v=>{if(ro()){closePad();return noEdit()}const p=S.groups[S.cg][padP];sc(p)[padH]=v&&v>0?Math.min(v,20):null;save();padMove(1)};
 window.padMove=d=>{const g=S.groups[S.cg];let pi=padP+d,h=padH;if(pi>=g.length){pi=0;h++}if(pi<0){pi=g.length-1;h--}if(h>=S.holes||h<0)return closePad();openPad(pi,h)};
 window.closePad=()=>{padP=padH=null;$('pad').classList.add('hidden');renderCard()};
 // ---- courses ----
@@ -534,30 +587,62 @@ const BE=LIVE?{
  create(id,k,meta){return this.rpc('te_create',{p_id:id,p_wkey:k,p_meta:meta})},
  meta(id,k,meta){return this.rpc('te_meta',{p_id:id,p_wkey:k,p_meta:meta})},
  put(id,k,gk,d){return this.rpc('te_put',{p_id:id,p_wkey:k,p_gk:gk,p_data:d})},
+ puts(id,sk,gk,d){return this.rpc('te_put_s',{p_id:id,p_skey:sk,p_gk:gk,p_data:d})}, // scorer key (supabase-share.sql)
  get(id){return this.rpc('te_get',{p_id:id})}
 }:{ // offline fallback: event kept on this phone only
  _r(id){return JSON.parse(localStorage.getItem('teedraw.ev.'+id)||'null')},_w(id,o){localStorage.setItem('teedraw.ev.'+id,JSON.stringify(o))},
  async create(id,k,meta){this._w(id,{meta,groups:{}})},async meta(id,k,meta){const o=this._r(id)||{groups:{}};o.meta=meta;this._w(id,o)},
- async put(id,k,gk,d){const o=this._r(id)||{meta:null,groups:{}};o.groups[gk]=d;o.updated=new Date().toISOString();this._w(id,o)},async get(id){return this._r(id)}};
+ async put(id,k,gk,d){const o=this._r(id)||{meta:null,groups:{}};o.groups[gk]=d;o.updated=new Date().toISOString();this._w(id,o)},async puts(id,k,gk,d){return this.put(id,k,gk,d)},async get(id){return this._r(id)}};
 const RANKS={pts:'Total Stableford points',nett:'Total nett (to par)',gross:'Total gross (to par)'};
 const baseURL=()=>location.href.split('#')[0];
 const liveURL=id=>baseURL()+'#live='+id, joinURL=E=>baseURL()+'#join='+E.id+'.'+E.k;
 function qrSVG(t,cell){try{const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag({cellSize:cell||4,margin:2,scalable:true})}catch(e){return''}}
 let LST='',LV=null,LVID=null,LVSEL='all';window.JOIN=null;window.EF=null;window.TDL={get LV(){return LV},BE,liveURL:i=>liveURL(i),joinURL:e=>joinURL(e),pull:()=>livePull(),poll:()=>pollLive()};
-window.TDX={isBack,lo,ao,nineName,cpar,csi,shots,tot,ptsGrid,twoList,link,drawText,dec,hasScores,save,renderDraw,renderScore,renderCard,renderEvent}; // test hooks (tests/nine.js)
+window.TDX={locked:()=>locked(),ro:()=>ro(),isBack,lo,ao,nineName,cpar,csi,shots,tot,ptsGrid,twoList,link,drawText,dec,hasScores,save,renderDraw,renderScore,renderCard,renderEvent}; // test hooks (tests/nine.js)
 function liveStat(s){LST=s;document.querySelectorAll('.lvst').forEach(e=>{e.textContent=lstText();e.className='lvst '+s})}
 function lstText(){return LST==='ok'&&!LIVE?'● Saved on this phone only (live sharing not set up)':LST==='ok'?'● Live · synced '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}):LST==='err'?'● Offline – will retry':LST==='missing'?'Event not found':LIVE?'● Connecting…':'● This phone only (live sharing not set up)'}
 function cfix(c,n){c=JSON.parse(JSON.stringify(c));if(c.par.length<n){c.par=c.par.concat(c.par).slice(0,18);c.si=c.si.concat(c.si.map(x=>x*2)).map((x,i)=>i<9?x*2-1:x).slice(0,18);if(c.m)c.m=c.m.concat(c.m)}return c}
-function applyDay(d){const day=S.ev.days[d],f=S.courses.find(c=>c.name===day.c.name);S.course=f?cfix(f,day.c.n):{name:day.c.name,par:day.c.par.slice(),si:day.c.si.slice(),...(day.c.nine&&day.c.n===9&&day.c.par.length<18?{half:day.c.nine}:{}),...(day.c.tees&&day.c.tees.length?{tees:day.c.tees.map(t=>({...t,m:[]})),tee:day.c.tees[0].name}:{})};S.holes=day.c.n;S.nine=day.c.nine||'front';S.ev.d=d;S.cg=0;S.ch=0}
+function applyDay(d){const day=S.ev.days[d];let f=S.courses.find(c=>c.name===day.c.name);if(f){const z=dayC(f,day.c.n,day.c.nine);if(JSON.stringify([z.par,z.si])!==JSON.stringify([day.c.par,day.c.si]))f=null} // a same-named local card that differs is ignored: everyone gets the organiser's card
+ S.course=f?cfix(f,day.c.n):{name:day.c.name,par:day.c.par.slice(),si:day.c.si.slice(),...(day.c.nine&&day.c.n===9&&day.c.par.length<18?{half:day.c.nine}:{}),...(day.c.m?{m:day.c.m.slice()}:{}),...(day.c.tees&&day.c.tees.length?{tees:day.c.tees.map(t=>({...t,m:(t.m||[]).slice()})),tee:day.c.tees[0].name}:{})};S.holes=day.c.n;S.nine=day.c.nine||'front';S.ev.d=d;S.cg=0;S.ch=0}
 const _save=save;save=function(){_save();livePush()};window.save=save;
-function gData(g,i){return{p:g.slice(),h:g.map(p=>+S.hcp[p]||0),s:Object.fromEntries(g.map(p=>[p,(S.scores[p]||[]).slice(0,S.holes).map(x=>x||0)])),t:S.ev&&S.ev.role==='scorer'?(S.ev.t||''):addMin(S.tstart,i*S.tint)}}
-function myGroups(){if(!S.ev||!S.ev.k)return[];return S.ev.role==='scorer'?[[S.ev.gi,S.groups[0]]]:S.groups.map((g,i)=>[i,g])}
-function metaObj(){const E=S.ev,days=E.days.map((d,i)=>i===E.d&&E.role==='org'?{...d,g:S.groups.length}:d);E.days=days;return{v:1,name:E.name,rank:E.rank,days,d:E.d}}
+function gData(g,i){const E=S.ev,o={p:g.slice(),h:g.map(p=>+S.hcp[p]||0),s:Object.fromEntries(g.map(p=>[p,(S.scores[p]||[]).slice(0,S.holes).map(x=>x||0)])),t:E&&E.role==='scorer'?(E.full?((E.tt||[])[i]||addMin(S.tstart,i*S.tint)):(E.t||'')):addMin(S.tstart,i*S.tint)};
+ o.i=g.map(p=>{const v=(S.hi||{})[p];return v===''||v==null||isNaN(v)?null:+v});o.e=g.map(p=>(S.ptee||{})[p]||0);if(S.tf&&S.tf[i])o.f=S.tf[i];return o}
+function myGroups(){if(!S.ev||!S.ev.k)return[];return S.ev.role==='scorer'?[[S.ev.gi,S.groups[S.ev.full?S.ev.gi:0]]]:S.groups.map((g,i)=>[i,g])}
+// ---- full round setup shared through the event (meta.x = format settings; group rows also carry team format, HI and tee) ----
+function setupX(){return{ts:S.tstart,ti:+S.tint||0,sz:S.size,cp:S.comp||'',cy:S.carry!==false?1:0,wh:S.whs?1:0,tp:+S.twoPot||0,sh:S.shade===false?0:1}}
+function normX(x){x=x||{};const l=setupX();return{ts:x.ts||l.ts,ti:x.ti!=null?+x.ti:l.ti,sz:x.sz!=null?x.sz:l.sz,cp:x.cp!=null?x.cp:l.cp,cy:x.cy!=null?x.cy:l.cy,wh:x.wh!=null?x.wh:l.wh,tp:x.tp!=null?+x.tp:l.tp,sh:x.sh!=null?x.sh:l.sh}}
+const ckey=c=>[c.name,c.par,c.si,c.n,c.nine||''];
+function groupKeys(o,d){const day=o.meta.days[d],gc=day&&day.g!=null?day.g:999;return Object.keys(o.groups||{}).filter(k=>{const[a,b]=k.split(':').map(Number);return a===d&&b<gc}).sort((a,b)=>+a.split(':')[1]-+b.split(':')[1])}
+const sigRemote=(o,d)=>JSON.stringify([ckey(o.meta.days[d].c),groupKeys(o,d).map(k=>o.groups[k].p),normX(o.meta.x)]);
+const sigLocal=()=>{const z=dayC(S.course,S.holes,S.nine);return JSON.stringify([ckey(z),S.groups,setupX()])};
+function applyRound(o,opt){const E=S.ev,m=o.meta,own=opt.own==null?-1:opt.own,keep={cg:S.cg,ch:S.ch},old={sc:S.scores,hcp:S.hcp,hi:S.hi||{},pt:S.ptee||{}};
+ E.name=m.name;E.rank=m.rank;E.days=m.days;const day=m.days[E.d];applyDay(E.d);const x=normX(m.x),ks=groupKeys(o,E.d),G=ks.map(k=>o.groups[k]);
+ S.tstart=x.ts;S.tint=x.ti;S.size=x.sz;S.comp=x.cp;S.carry=!!x.cy;S.whs=!!x.wh;S.twoPot=x.tp;S.shade=!!x.sh;if(day.date)S.date=day.date;
+ if(!m.x&&G[0]&&G[0].t){S.tstart=G[0].t;if(G[1]&&G[1].t){const a=G[0].t.split(':'),b=G[1].t.split(':');S.tint=Math.max(0,(+b[0]*60+ +b[1])-(+a[0]*60+ +a[1]))}}
+ S.groups=G.map(g=>g.p.slice());S.players=S.groups.flat();S.scores={};S.hcp={};S.hi={};S.ptee={};S.tf={};E.tt=G.map(g=>g.t||'');
+ G.forEach((g,gi)=>{const mine=!opt.first&&gi===own;g.p.forEach((p,i)=>{
+  if(mine&&old.sc[p]){S.scores[p]=old.sc[p];S.hcp[p]=old.hcp[p];if(old.hi[p]!=null)S.hi[p]=old.hi[p];if(old.pt[p])S.ptee[p]=old.pt[p];return}
+  S.scores[p]=((g.s||{})[p]||[]).map(v=>v||null);S.hcp[p]=+(g.h||[])[i]||0;const hv=(g.i||[])[i];if(hv!=null)S.hi[p]=hv;const te=(g.e||[])[i];if(te)S.ptee[p]=te});
+  if(g.f)S.tf[gi]=g.f;if(opt.first)S.evLS[ks[gi]]=JSON.stringify(g)});
+ S.cg=opt.first?Math.max(0,own):Math.min(keep.cg,Math.max(0,S.groups.length-1));S.ch=opt.first?0:Math.min(keep.ch,Math.max(0,S.holes-1));S.started=S.finished=false}
+function followSync(o){const E=S.ev,m=o.meta;if(!m||!m.days||!m.days[E.d])return false;
+ if(E.role==='view'&&m.d!=null&&m.d!==E.d&&m.days[m.d]){E.d=m.d;applyRound(o,{first:true});return true}
+ const own=E.role==='scorer'?E.gi:-1,ks=groupKeys(o,E.d);
+ if(sigRemote(o,E.d)!==sigLocal()){if(!ks.length&&S.groups.length)return false;applyRound(o,{first:false,own});return true}
+ let ch=false;const set=(O,p,v)=>{if(JSON.stringify(O[p])!==JSON.stringify(v)){O[p]=v;ch=true}};
+ ks.forEach((k,gi)=>{const g=o.groups[k];if(!g)return;
+  if(gi!==own){g.p.forEach((p,i)=>{set(S.scores,p,((g.s||{})[p]||[]).map(v=>v||null));set(S.hcp,p,+(g.h||[])[i]||0);const hv=(g.i||[])[i];if(hv!=null)set(S.hi,p,hv);set(S.ptee,p,(g.e||[])[i]||0)});S.evLS[k]=JSON.stringify(g)}
+  const f=g.f||null;if(JSON.stringify((S.tf||{})[gi]||null)!==JSON.stringify(f)){S.tf=S.tf||{};if(f)S.tf[gi]=f;else delete S.tf[gi];ch=true}});
+ return ch}
+const locked=()=>{const E=S.ev;return !!E&&E.role!=='org'&&(E.role==='view'||!!E.full)};
+const ro=()=>{const E=S.ev;return !!E&&E.role!=='org'&&(E.role==='view'||(E.role==='scorer'&&E.full&&S.cg!==E.gi))};
+const noEdit=()=>{if(S.ev&&S.ev.role==='view')toast('You’re following this round – read only',2200);else toast('Only the organiser can change this. You can score your own group.',2600)};
+function metaObj(){const E=S.ev,days=E.days.map((d,i)=>i===E.d&&E.role==='org'?{...d,g:S.groups.length}:d);E.days=days;return{v:1,name:E.name,rank:E.rank,days,d:E.d,x:setupX()}}
 let _pt=null,_lm='';
 function livePush(now){if(!S.ev||!S.ev.k)return;clearTimeout(_pt);_pt=setTimeout(doPush,now?0:1200)}
 async function doPush(){if(!S.ev||!S.ev.k)return;const E=S.ev;S.evLS=S.evLS||{};let ok=true;
  try{if(E.role==='org'){const m=metaObj(),j=JSON.stringify(m);if(j!==_lm){await BE.meta(E.id,E.k,m);_lm=j}}
-  for(const[gi,g]of myGroups()){if(!g)continue;const gk=E.d+':'+gi,d=gData(g,gi),j=JSON.stringify(d);if(S.evLS[gk]===j)continue;await BE.put(E.id,E.k,gk,d);S.evLS[gk]=j}}catch(e){ok=false}
+  for(const[gi,g]of myGroups()){if(!g)continue;const gk=E.d+':'+gi,d=gData(g,gi),j=JSON.stringify(d);if(S.evLS[gk]===j)continue;await(E.kt==='s'?BE.puts(E.id,E.k,gk,d):BE.put(E.id,E.k,gk,d));S.evLS[gk]=j}}catch(e){ok=false}
  _save();liveStat(ok?'ok':'err');if(S.tab==='event')renderEvent()}
 function merge(gk,g,rem){const base=S.evLS[gk]?JSON.parse(S.evLS[gk]):null;let ch=false;
  g.forEach((p,i)=>{const r=(rem.s||{})[p]||[],l=sc(p),b=base?((base.s||{})[p]||[]):[];
@@ -567,13 +652,14 @@ function merge(gk,g,rem){const base=S.evLS[gk]?JSON.parse(S.evLS[gk]):null;let c
 async function livePull(){const E=S.ev;if(!E)return;try{const o=await BE.get(E.id);if(!o){liveStat('missing');return}_evRemote=o.groups||{};
  if(o.meta&&E.role!=='org'){E.name=o.meta.name;E.rank=o.meta.rank;E.days=o.meta.days}
  S.evLS=S.evLS||{};let ch=false;for(const[gi,g]of myGroups()){const gk=E.d+':'+gi,r=(o.groups||{})[gk];if(r&&g)ch=merge(gk,g,r)||ch}
+ if(o.meta&&E.role!=='org'&&(E.full||E.role==='view'))ch=followSync(o)||ch;
  _save();if(ch&&!document.activeElement?.matches('input,textarea'))({score:renderScore,card:renderCard,board:renderBoard})[S.tab]?.();
  liveStat('ok');if(E.role!=='view')livePush();if(S.tab==='event')renderEvent()}catch(e){liveStat('err')}}
 setInterval(()=>{if(document.hidden)return;if(S.tab==='live')pollLive();else if(S.ev)livePull()},12000);
 // ---- routes: #live=ID (viewer, read-only) and #join=ID.KEY (scorer) ----
 function liveHash(){const m=location.hash.match(/#live=([a-z0-9]{16,64})/),j=location.hash.match(/#join=([a-z0-9]{16,64})\.([a-z0-9]{16,64})/);
  if(m){LVID=m[1];LVSEL='all';S.tab='live'}else if(S.tab==='live')S.tab='event';
- if(j){JOIN={id:j[1],k:j[2],o:null};S.tab='event';history.replaceState(null,'',baseURL());BE.get(j[1]).then(o=>{JOIN.o=o||'missing';renderEvent()},()=>{JOIN.o='err';renderEvent()})}}
+ if(j){JOIN={id:j[1],k:j[2],kt:'w',o:null};S.tab='event';history.replaceState(null,'',baseURL());BE.get(j[1]).then(o=>{JOIN.o=o||'missing';renderEvent()},()=>{JOIN.o='err';renderEvent()})}}
 liveHash();addEventListener('hashchange',()=>{liveHash();setTab(S.tab)});
 async function pollLive(){if(!LVID)return;try{const o=await BE.get(LVID);LV=o||'missing';liveStat(o?'ok':'missing')}catch(e){liveStat('err')}if(S.tab==='live')drawLive()}
 function renderLive(){drawLive();pollLive()}
@@ -587,13 +673,13 @@ function boardHTML(o,sel,onsel){const m=o.meta,B=evBoard(m,o.groups,m.rank),D=m.
 window.lvSel=k=>{LVSEL=k;drawLive()};window.evSel=k=>{LVSEL=k;renderEvent()};
 function drawLive(){const el=$('lvb');if(!LV){el.innerHTML='<div class="mut">Loading live scores…</div>';return}
  if(LV==='missing'){el.innerHTML='<h2>Event not found</h2><div class="mut">Check the link or QR code.'+(LIVE?'':' (Live sharing isn’t set up in this copy of TeeDraw, so events only exist on the phone that created them.)')+'</div>';return}
- el.innerHTML=`<h2 style="margin:0">📡 ${esc(LV.meta.name)}</h2><div class="lvst ${LST}">${lstText()}</div><div class="mut">View only · updates every 12 s</div>`+boardHTML(LV,LVSEL,'lvSel')}
+ el.innerHTML=`<h2 style="margin:0">📡 ${esc(LV.meta.name)}</h2><div class="lvst ${LST}">${lstText()}</div><div class="mut">View only · updates every 12 s</div>`+boardHTML(LV,LVSEL,'lvSel')+`<div class="btns"><button class="wide" onclick="evFollowLive()">📲 Load this round on my phone</button></div><div class="mut">Gets you the same scorecard, players and draw to follow along offline.</div>`}
 // ---- event screen ----
 function renderEvent(){const el=$('evb'),E=S.ev;
  if(JOIN){const o=JOIN.o;if(!o){el.innerHTML='<div class="card">Loading event…</div>';return}
   if(o==='missing'||o==='err'){el.innerHTML=`<div class="card"><h2>Can’t open event</h2><div class="mut">${o==='err'?'No connection – try again.':'Event not found.'}</div><div class="btns"><button class="sec" onclick="JOIN=null;renderEvent()">Close</button></div></div>`;return}
-  const d=o.meta.d||0,day=o.meta.days[d],gc=day.g==null?999:day.g,ks=Object.keys(o.groups||{}).filter(k=>+k.split(':')[0]===d&&+k.split(':')[1]<gc).sort((a,b)=>+a.split(':')[1]-+b.split(':')[1]);
-  el.innerHTML=`<div class="card"><h2>Score for a group</h2><div><b>${esc(o.meta.name)}</b> · Day ${d+1} · ${esc(day.c.name)} · ${nineLabel(day.c.n,day.c.nine)}</div><div class="mut" style="margin:6px 0">Pick your group. Scores you enter show live for everyone with the event QR.</div>${ks.map(k=>{const g=o.groups[k];return`<button class="sec wide" onclick="evJoin('${k}')">Group ${+k.split(':')[1]+1}${g.t?' · '+esc(g.t):''}<br><small>${g.p.map(esc).join(', ')}</small></button>`}).join('')||'<div class="mut">The organiser hasn’t shared groups yet.</div>'}<div class="btns"><button class="sec" onclick="JOIN=null;renderEvent()">Cancel</button></div></div>`;return}
+  const d=o.meta.d||0,day=o.meta.days[d],ks=groupKeys(o,d);
+  el.innerHTML=`<div class="card"><h2>${JOIN.k?'Join this round':'Follow this round'}</h2><div><b>${esc(o.meta.name)}</b> · Day ${d+1} · ${esc(day.c.name)} · ${nineLabel(day.c.n,day.c.nine)}</div><div class="mut" style="margin:6px 0">You’ll get the same scorecard, players and draw as the organiser, plus the live leaderboard.${JOIN.k?' Pick your group to enter its scores, or just follow.':' This link is view-only – ask the organiser for the round link or QR with scoring if you need to enter scores.'}</div>${JOIN.k?ks.map(k=>{const g=o.groups[k];return`<button class="sec wide" onclick="evJoin('${k}')">I’m in Group ${+k.split(':')[1]+1}${g.t?' · '+esc(g.t):''}<br><small>${g.p.map(esc).join(', ')}</small></button>`}).join('')||'<div class="mut">The organiser hasn’t shared groups yet.</div>':''}<div class="btns"><button class="${JOIN.k?'sec ':''}wide" onclick="evFollow()">👀 ${JOIN.k?'Just follow (read-only)':'Load round on my phone'}</button><button class="sec" onclick="JOIN=null;renderEvent()">Cancel</button></div></div>`;return}
  if(!E){if(!EF)EF={name:'',days:1,rank:'pts',c:[S.courses.findIndex(c=>c.name===S.course.name)],h:[S.holes],nn:[S.nine==='back'?'back':'front'],dt:[S.date]};
   const dayRow=i=>`<div class="row evday"><div style="flex:0 0 44px"><label>Day ${i+1}</label></div><div><select onchange="EF.c[${i}]=+this.value">${S.courses.map((c,j)=>`<option value="${j}" ${(EF.c[i]??EF.c[0])==j?'selected':''}>${esc(c.name)}${c.src==='community'||c.cid?' · Community':''}</option>`).join('')}</select></div><div style="flex:0 0 104px"><select aria-label="Holes, day ${i+1}" onchange="EF.h[${i}]=this.value==='18'?18:9;EF.nn[${i}]=this.value==='9b'?'back':'front'"><option value="18">18 holes</option><option value="9f" ${(EF.h[i]??EF.h[0])==9&&(EF.nn[i]??EF.nn[0])!=='back'?'selected':''}>Front 9</option><option value="9b" ${(EF.h[i]??EF.h[0])==9&&(EF.nn[i]??EF.nn[0])==='back'?'selected':''}>Back 9</option></select></div></div>`;
   el.innerHTML=`<div class="card"><h2>📡 New event</h2><div class="mut">Multi-day or single round. Your current draw becomes Day 1’s groups.</div>
@@ -604,31 +690,34 @@ function renderEvent(){const el=$('evb'),E=S.ev;
   <div class="btns"><button onclick="evCreate()">Create event</button></div>
   <div class="mut" style="margin-top:8px">${LIVE?'Live sharing is on: anyone with the event QR can watch scores update.':'Live sharing isn’t set up in this copy yet, so the event and its leaderboard work on this phone only.'} Use first names or nicknames only.</div></div>`;return}
  const o=evLocalView();
- el.innerHTML=`<div class="card"><h2 style="margin:0">📡 ${esc(E.name)}</h2><div class="mut">${E.days.length} day${E.days.length>1?'s':''} · ${RANKS[E.rank]} · ${E.role==='org'?'Organiser':'Scorer'}</div><div class="lvst ${LST}">${lstText()}</div>
- ${E.role==='org'?`<label>Scoring day</label><div class="seg">${E.days.map((d,i)=>`<button class="${i===E.d?'on':''}" onclick="evDay(${i})">Day ${i+1}</button>`).join('')}</div><div class="mut" style="margin-top:4px">Day ${E.d+1}: ${esc(E.days[E.d].c.name)} · ${nineLabel(E.days[E.d].c.n,E.days[E.d].c.nine)} · ${S.groups.length} group(s) from the Draw tab</div>`:`<div class="mut">You score for Group ${E.gi+1} on Day ${E.d+1}.</div>`}
- <div class="qrs"><div class="qrbox">${qrSVG(liveURL(E.id),5)}<b>Live scores</b><span class="mut">Anyone can scan to watch (view only)</span></div>
- ${E.role==='org'?`<div class="qrbox sc">${qrSVG(joinURL(E),5)}<b>Scorers</b><span class="mut">Only for one scorer per group</span></div>`:''}</div>
- <div class="btns"><button onclick="evShare()">Share live link</button>${E.role==='org'?'<button class="sec" onclick="evShareJoin()">Send scorer link</button>':''}<button class="sec" onclick="location.hash=\'live=${E.id}\'">Open live view</button></div></div>
+ el.innerHTML=`<div class="card"><h2 style="margin:0">📡 ${esc(E.name)}</h2><div class="mut">${E.days.length} day${E.days.length>1?'s':''} · ${RANKS[E.rank]} · ${E.role==='org'?'Organiser':E.role==='view'?'Following (read-only)':'Scorer'}</div><div class="lvst ${LST}">${lstText()}</div>
+ ${E.role==='org'?`<label>Scoring day</label><div class="seg">${E.days.map((d,i)=>`<button class="${i===E.d?'on':''}" onclick="evDay(${i})">Day ${i+1}</button>`).join('')}</div><div class="mut" style="margin-top:4px">Day ${E.d+1}: ${esc(E.days[E.d].c.name)} · ${nineLabel(E.days[E.d].c.n,E.days[E.d].c.nine)} · ${S.groups.length} group(s) from the Draw tab</div>`:E.role==='view'?`<div class="mut">You’re following Day ${E.d+1}: same course, players and draw as the organiser. Scores update live.</div>`:`<div class="mut">You score for Group ${E.gi+1} on Day ${E.d+1}. The rest of the draw is read-only.</div>`}
+ <div class="qrs"><div class="qrbox">${qrSVG(roundURL(E),5)}<b>Join this round</b><span class="mut">${E.sk||E.role!=='org'?'Same card, players &amp; draw'+(E.sk?'; scorers can enter scores':' (view only)'):'Same card, players &amp; draw (view only)'}</span></div>
+ <div class="qrbox">${qrSVG(liveURL(E.id),5)}<b>Live scores</b><span class="mut">Leaderboard only</span></div></div>
+ ${E.role==='org'&&!E.sk?`<div class="mut" style="margin-top:6px">${E.skx?'Scoring-by-link needs the one-time setup (supabase-share.sql). Until then the round link is view-only.':'Preparing scorer key…'}</div><div class="qrbox sc" style="margin-top:8px">${qrSVG(joinURL(E),4)}<b>Old-style scorer link</b><span class="mut">Gives full control – only for one trusted scorer</span></div>`:''}
+ <div class="btns"><button onclick="evShareRound()">📲 Share this round</button><button class="sec" onclick="evCopyRound()">Copy link</button></div>
+ <div class="btns"><button class="sec" onclick="evShare()">Share live link</button>${E.role==='org'&&!E.sk?'<button class="sec" onclick="evShareJoin()">Send scorer link</button>':''}<button class="sec" onclick="location.hash=\'live=${E.id}\'">Open live view</button></div></div>
  <div class="card"><h2>Leaderboard</h2>${o?boardHTML(o,LVSEL,'evSel'):''}</div>
  <div class="btns"><button class="sec" onclick="evLeave()">Leave event</button></div>`}
 function evLocalView(){const E=S.ev;const groups=Object.assign({},(LV&&LV.meta&&LVID===E.id?LV.groups:null)||{});
  if(E.role==='org'){Object.assign(groups,_evRemote);Object.entries(S.evR||{}).forEach(([d,r])=>{if(+d!==E.d)r.groups.forEach((g,i)=>{const k=d+':'+i;if(!groups[k])groups[k]=gDataR(g,r)})});S.groups.forEach((g,i)=>groups[E.d+':'+i]=gData(g,i))}
- else{Object.assign(groups,_evRemote);groups[E.d+':'+E.gi]=gData(S.groups[0],E.gi)}
- return{meta:{name:E.name,rank:E.rank,days:E.role==='org'?metaObj().days:E.days},groups}}
+ else{Object.assign(groups,_evRemote);if(E.role==='scorer'){const g=S.groups[E.full?E.gi:0];if(g)groups[E.d+':'+E.gi]=gData(g,E.gi)}}
+ return{meta:{name:E.name,rank:E.rank,days:E.role==='org'?metaObj().days:E.days,x:E.role==='org'?setupX():undefined},groups}}
 function gDataR(g,r){return{p:g,h:g.map(p=>+(r.hcp||{})[p]||+S.hcp[p]||0),s:Object.fromEntries(g.map(p=>[p,(r.scores[p]||[]).map(x=>x||0)]))}}
 let _evRemote={};
 window.evCreate=async()=>{const name=(EF.name||'').trim().slice(0,60)||'Golf day';const days=[...Array(EF.days).keys()].map(i=>{const c=S.courses[EF.c[i]??EF.c[0]]||S.course,n=EF.h[i]??EF.h[0];return{c:dayC(c,n,EF.nn[i]??EF.nn[0]),date:i===0?S.date:''}});
  const id=rid(20),k=rid(20),meta={v:1,name,rank:EF.rank,days,d:0};
  try{await BE.create(id,k,meta)}catch(e){return toast('Could not create the event online – check your connection')}
  S.ev={id,k,role:'org',d:0,name,rank:EF.rank,days};S.evLS={};S.evR={};_lm='';EF=null;
- const keep=S.course.name===days[0].c.name&&S.holes===days[0].c.n&&(S.holes!==9||(days[0].c.nine==='back')===isBack());applyDay(0);if(!keep)S.scores={};track('event_created',{days:days.length,rank:meta.rank});save();livePush(1);renderEvent();toast('Event created')};
+ const keep=S.course.name===days[0].c.name&&S.holes===days[0].c.n&&(S.holes!==9||(days[0].c.nine==='back')===isBack());applyDay(0);if(!keep)S.scores={};ensureSK();track('event_created',{days:days.length,rank:meta.rank});save();livePush(1);renderEvent();toast('Event created')};
 window.evDay=async d=>{const E=S.ev;if(d===E.d)return;clearTimeout(_pt);await doPush();S.evR=S.evR||{};S.evR[E.d]={groups:S.groups,scores:S.scores,hcp:Object.fromEntries(S.groups.flat().map(p=>[p,+S.hcp[p]||0]))};
  const r=S.evR[d];applyDay(d);if(r){S.groups=r.groups;S.scores=r.scores}else S.scores={};save();renderEvent();toast('Now scoring Day '+(d+1))};
-window.evJoin=k=>{const o=JOIN.o,g=o.groups[k],d=+k.split(':')[0],gi=+k.split(':')[1];
- if(S.groups.flat().some(p=>(S.scores[p]||[]).some(Boolean))&&!confirm('Load this group? Your current scorecard on this phone will be replaced.'))return;
- S.ev={id:JOIN.id,k:JOIN.k,role:'scorer',d,gi,t:g.t||'',name:o.meta.name,rank:o.meta.rank,days:o.meta.days};S.evLS={};applyDay(d);
- S.groups=[g.p.slice()];S.players=g.p.slice();S.scores={};g.p.forEach((p,i)=>{S.scores[p]=(g.s[p]||[]).map(x=>x||null);S.hcp[p]=+g.h[i]||0});S.evLS[k]=JSON.stringify(g);
- JOIN=null;track('event_joined',{});save();setTab('score');toast('Joined Group '+(gi+1))};
+window.evJoin=k=>{const o=JOIN.o,d=+k.split(':')[0],gi=+k.split(':')[1];
+ if(hasScores()&&!confirm('Load this round? Your current scorecard on this phone will be replaced.'))return;
+ S.ev={id:JOIN.id,k:JOIN.k,kt:JOIN.kt||'w',role:'scorer',full:1,d,gi,t:(o.groups[k]||{}).t||'',name:o.meta.name,rank:o.meta.rank,days:o.meta.days};S.evLS={};
+ applyRound(o,{first:true,own:gi});JOIN=null;track('event_joined',{});save();setTab('score');toast('Joined Group '+(gi+1)+' – full draw loaded')};
+window.evFollow=()=>{const o=JOIN.o,d=o.meta.d||0;if(hasScores()&&!confirm('Load this round? Your current scorecard on this phone will be replaced.'))return;
+ S.ev={id:JOIN.id,k:null,role:'view',full:1,d,name:o.meta.name,rank:o.meta.rank,days:o.meta.days};S.evLS={};applyRound(o,{first:true,own:-1});JOIN=null;track('event_followed',{});save();setTab('score');toast('Round loaded – read only')};
 window.evLeave=()=>{if(!confirm('Leave this event on this phone? Scores already shared stay in the event.'))return;S.ev=null;S.evLS={};save();renderEvent()};
 window.evShare=()=>wa(`📡 Live scores – ${S.ev.name}\n${liveURL(S.ev.id)}`);
 window.evShareJoin=()=>wa(`✍️ TeeDraw scorer link for ${S.ev.name} (scorers only – please don’t forward):\n${joinURL(S.ev)}`);
@@ -787,5 +876,115 @@ addEventListener('beforeinstallprompt',e=>{e.preventDefault();defPr=e;showInst()
 addEventListener('appinstalled',()=>{defPr=null;inst.classList.add('hidden')});
 showInst();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+// ---------- sharing: player-list links, club codes and shared rounds (club codes + scorer keys need supabase-share.sql; links work without it) ----------
+const SK={clubs:'teedraw.clubs'},clubsGet=()=>jget(SK.clubs,[]),clubsSet=a=>jset(SK.clubs,a);
+window.mdl=html=>{const m=$('mdl');m.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+html+'</div>';m.classList.remove('hidden')};
+window.mdlClose=()=>{const m=$('mdl');m.classList.add('hidden');m.innerHTML=''};
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){}
+ try{const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.cssText='position:fixed;top:0;opacity:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();if(ok)return true}catch(e){}return false}
+async function shareOrCopy(o){ // o={title,text,url}: share sheet (WhatsApp etc.) when available, else copy the link
+ if(navigator.share){try{await navigator.share(o);return 'shared'}catch(e){if(e&&e.name==='AbortError')return 'cancel'}}
+ const ok=await copyText(o.url);if(ok){toast('Link copied – paste it into WhatsApp');return 'copied'}
+ mdl(`<h2>Copy this link</h2><textarea id="lnkbox" readonly rows="4" onfocus="this.select()">${esc(o.url)}</textarea><div class="btns"><button class="sec" onclick="mdlClose()">Close</button></div>`);setTimeout(()=>{const b=$('lnkbox');if(b){b.focus();b.select()}},50);return 'box'}
+// -- player list link --
+const rLink=()=>rosterURL(baseURL(),R);
+function rLinkInfo(){const el=$('rlinkinfo');if(!el)return;if(!R.length){el.textContent='Add your regulars above first.';return}const n=rLink().length;el.textContent=R.length+' player'+(R.length===1?'':'s')+' · link is '+n+' characters'+(n>1800?' – long for some chat apps; a club code is safer for lists this big':'')}
+window.rShareLink=async()=>{if(!R.length){toast('No saved players yet');return}const r=await shareOrCopy({title:'TeeDraw player list',text:'⛳ My TeeDraw player list ('+R.length+' players) – tap to import:',url:rLink()});if(r!=='cancel')track('roster_shared',{n:R.length,via:r})};
+window.rCopyLink=async()=>{if(!R.length){toast('No saved players yet');return}if(await copyText(rLink()))toast('Link copied');else shareOrCopy({url:rLink()})};
+// -- import dialog (Merge / Replace / Cancel) --
+let IMP=null;
+function importAsk(list,from,after){const L=rosterClean(list);if(!L.length){toast('That list is empty');return}IMP={L,after};const nw=L.filter(x=>!R.some(r=>lc(r.n)===lc(x.n))).length;
+ mdl(`<h2>Import ${L.length} player${L.length===1?'':'s'} ${from?esc(from):'from a friend'}?</h2><div class="mut">${nw} new · ${L.length-nw} already in your list</div><div class="implist">${L.slice(0,60).map(x=>`<span class="chip">${esc(x.n)}${x.hi!==''?' <small>'+(x.hi<0?'+'+(-x.hi):x.hi)+'</small>':''}</span>`).join('')}${L.length>60?`<span class="mut"> +${L.length-60} more</span>`:''}</div>
+ <div class="btns" style="flex-direction:column"><button onclick="impDo('merge')">Merge into my list</button><button class="sec" onclick="impDo('replace')">Replace my list</button><button class="sec" onclick="impDo(null)">Cancel</button></div><div class="mut">Merge adds the new names and keeps yours. Replace swaps your saved list for this one${R.length?' (your '+R.length+' current players are removed)':''}.</div>`)}
+window.impDo=mode=>{const I=IMP;IMP=null;mdlClose();if(!I||!mode)return;const r=rosterMerge(R,I.L,mode);R.splice(0,R.length,...r.list);rStore();renderPlayers();rLinkInfo();
+ toast(mode==='replace'?'List replaced: '+R.length+' players':r.added+' added'+(r.filled?', '+r.filled+' handicaps filled in':''),2600);track('roster_imported',{mode,n:I.L.length});if(I.after)I.after(mode)};
+// -- clubs --
+const clubErr=(e,what)=>e&&e.kind==='missing'?'Club codes aren’t switched on yet (the one-time setup, supabase-share.sql, hasn’t been run). Share your player list link instead.':e&&e.kind==='later'?'Too many tries – wait a minute and try again.':e&&e.kind==='reject'?(e.message||'Rejected'):'No connection – '+(what||'try again')+' when you’re online.';
+const rnd=n=>[...crypto.getRandomValues(new Uint8Array(n))];
+const cFind=code=>clubsGet().find(c=>c.code===code);
+function cPut(c){const a=clubsGet(),i=a.findIndex(x=>x.code===c.code);if(i>=0)a[i]={...a[i],...c};else a.push(c);clubsSet(a);return a.find(x=>x.code===c.code)}
+function clubUrl(c){return baseURL()+'#/club='+c.code}
+function renderClubs(){const el=$('clubs');if(!el)return;const A=clubsGet();
+ el.innerHTML=A.map(c=>{const org=!!c.ek,n=(c.pl||[]).length;return`<div class="club"><div class="row" style="align-items:center"><b style="flex:1">${esc(c.name)}</b><span class="badge ${org?'org':''}">${org?'Organiser':'Member'}</span></div>
+  <div class="code">${esc(clubFmt(c.code))}</div><div class="mut">${n} player${n===1?'':'s'} · ${c.t?'synced '+new Date(c.t).toLocaleString([], {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'not synced yet'}${c.upd?' · <b style="color:var(--g)">new list available</b>':''}${c.rd?' · round attached':''}${org?'':' · read-only'}</div>
+  <div class="btns"><button class="sm" onclick="clubSync('${c.code}',1)">${c.upd?'Load updated list':'Sync'}</button><button class="sec sm" onclick="clubLoad('${c.code}')">Load list…</button>${c.rd?`<button class="sec sm" onclick="clubRound('${c.code}')">Open round</button>`:''}<button class="sec sm" onclick="clubShare('${c.code}')">Share code</button>${org?`<button class="sec sm" onclick="clubPublish('${c.code}')">Publish my list</button>${S.ev&&S.ev.role==='org'?`<button class="sec sm" onclick="clubPublishRound('${c.code}')">Publish current round</button>`:''}<button class="sec sm" onclick="clubKey('${c.code}')">Organiser key</button>`:''}<button class="sec sm" onclick="clubRemove('${c.code}')">Remove</button></div></div>`}).join('')||'<div class="mut">No clubs yet. A club code lets a whole group load the same player list (and the current round) on any phone.</div>'}
+window.clubForm=k=>{const f=$('clubform');if(f.dataset.k===k&&f.innerHTML){f.innerHTML='';f.dataset.k='';return}f.dataset.k=k;
+ f.innerHTML=k==='new'?`<label>Club name</label><input id="cn-name" maxlength="40" placeholder="e.g. Monzi Mondays" autocomplete="off"><div class="mut">You become the organiser: only this phone (via a private edit key) can change the club’s list. Members just read it. Only names and handicaps are stored.</div><div class="btns"><button onclick="clubCreate()">Create club</button><button class="sec" onclick="clubForm('new')">Cancel</button></div>`
+ :`<label>Club code</label><input id="cj-code" maxlength="30" placeholder="MONZI-4K7Q-R9TW" autocapitalize="characters" autocomplete="off" spellcheck="false"><details style="margin-top:6px"><summary class="mut">I’m the organiser (have an edit key)</summary><input id="cj-key" placeholder="Organiser edit key" autocomplete="off" autocapitalize="off" spellcheck="false"></details><div class="btns"><button onclick="clubJoin()">Load club</button><button class="sec" onclick="clubForm('join')">Cancel</button></div>`;
+ const i=f.querySelector('input');if(i)i.focus()};
+window.clubCreate=async()=>{const name=shName($('cn-name').value);if(!name){toast('Give the club a name');return}if(!LIVE){toast('Live sharing isn’t set up in this copy – use the player list link');return}
+ let last;for(let t=0;t<3;t++){const code=clubGen(name,rnd),ek=rid(24);try{await TDC.rpc('te_club_create',{p_code:code,p_name:name,p_ekey:ek,p_data:clubPack(R,null)});
+   cPut({code,name,ek,pl:rosterClean(R),rd:null,t:Date.now()});$('clubform').innerHTML='';$('clubform').dataset.k='';renderClubs();track('club_created',{n:R.length});clubShowCode(code,true);return}catch(e){last=e;if(!(e.kind==='reject'&&/taken/i.test(e.message||'')))break}}
+ toast(clubErr(last,'create the club'),4200)};
+function clubShowCode(code,fresh){const c=cFind(code);mdl(`<h2>${fresh?'Club created 🎉':esc(c.name)}</h2><div class="mut">Give members this code. They tap <b>Players → Enter a club code</b>, or open the link.</div><div class="bigcode">${esc(clubFmt(code))}</div><div class="btns"><button onclick="clubShare('${code}')">Share code</button><button class="sec" onclick="mdlClose()">Done</button></div>${c.ek?`<div class="mut" style="margin-top:8px">Your organiser edit key stays on this phone. Use “Organiser key” on the club to copy it if you ever want to manage the club from another phone.</div>`:''}`)}
+window.clubShare=async code=>{const c=cFind(code);if(!c)return;const r=await shareOrCopy({title:'TeeDraw club '+c.name,text:`⛳ Join our TeeDraw club “${c.name}”.\nOpen TeeDraw → Players → Enter a club code: ${clubFmt(code)}\nOr tap:`,url:clubUrl(c)});if(r!=='cancel')track('club_shared',{via:r})};
+async function clubFetch(code){const r=await TDC.rpc('te_club_get',{p_code:code});if(!r||!r.data)return null;const u=clubUnpack(r.data);if(!u)return null;return{name:shName(r.name)||'Club',upd:r.updated,...u}}
+window.clubJoin=async()=>{const code=clubNorm($('cj-code').value),ek=($('cj-key')?$('cj-key').value:'').trim();if(!clubOk(code)){toast('That doesn’t look like a club code (8+ letters/numbers, e.g. MONZI-4K7Q-R9TW)',3200);return}await clubOpen(code,ek)};
+async function clubOpen(code,ek){if(!LIVE){toast('Live sharing isn’t set up in this copy');return}
+ let r;try{r=await clubFetch(code)}catch(e){const old=cFind(code);if(old&&e.kind==='net'){toast('Offline – showing the saved copy');clubLoad(code);return}toast(clubErr(e,'load the club'),4200);return}
+ if(!r){toast('No club with that code – check the letters');return}
+ const c=cPut({code,name:r.name,pl:r.players,rd:r.round,t:Date.now(),sv:r.upd,upd:false,...(ek?{ek}:{})});$('clubform').innerHTML='';$('clubform').dataset.k='';renderClubs();track('club_joined',{n:r.players.length});
+ importAsk(r.players,'from '+c.name+(r.round?' (a live round is attached – open it from the club card)':''))}
+window.clubSync=async(code,ask)=>{const c=cFind(code);if(!c)return;let r;try{r=await clubFetch(code)}catch(e){toast(e.kind==='net'?'Offline – showing the saved copy':clubErr(e),3200);if(ask&&(c.pl||[]).length)clubLoad(code);return}
+ if(!r){toast('The club is no longer available');return}const changed=!!c.upd||JSON.stringify(rosterClean(r.players))!==JSON.stringify(rosterClean(c.pl||[]));
+ cPut({code,name:r.name,pl:r.players,rd:r.round,t:Date.now(),sv:r.upd,upd:false});renderClubs();
+ if(ask)importAsk(r.players,'from '+r.name+(changed?' (updated)':''));else if(changed){cPut({code,upd:true});renderClubs()}}
+window.clubLoad=code=>{const c=cFind(code);if(!c||!(c.pl||[]).length){toast('Nothing saved yet – tap Sync');return}importAsk(c.pl,'from '+c.name)};
+window.clubPublish=async code=>{const c=cFind(code);if(!c||!c.ek)return;if(!R.length){toast('Your saved list is empty');return}
+ try{await TDC.rpc('te_club_update',{p_code:code,p_ekey:c.ek,p_data:clubPack(R,c.rd)});cPut({code,pl:rosterClean(R),t:Date.now()});renderClubs();toast('Published '+R.length+' players to '+c.name,2600);track('club_published',{n:R.length})}catch(e){toast(e.kind==='reject'?'The organiser key was rejected':clubErr(e,'publish'),4200)}};
+window.clubPublishRound=async code=>{const c=cFind(code),E=S.ev;if(!c||!c.ek||!E||E.role!=='org')return;if(!E.sk&&!E.skx)await ensureSK();
+ const rd={id:E.id,k:E.sk||''};try{await TDC.rpc('te_club_update',{p_code:code,p_ekey:c.ek,p_data:clubPack(c.pl&&c.pl.length?c.pl:R,rd)});cPut({code,rd:{id:rd.id,k:rd.k},t:Date.now()});renderClubs();toast('Round shared with the club'+(rd.k?'':' (members can follow, not score)'),3000)}catch(e){toast(e.kind==='reject'?'The organiser key was rejected':clubErr(e,'publish'),4200)}};
+window.clubRound=code=>{const c=cFind(code);if(!c||!c.rd)return;openRound(c.rd.id,c.rd.k)};
+window.clubKey=code=>{const c=cFind(code);if(!c||!c.ek)return;mdl(`<h2>Organiser key</h2><div class="mut">Anyone with this key can change the club’s list. Keep it private. To manage the club from another phone choose “Enter a club code” there and paste the key under “I’m the organiser”.</div><textarea id="lnkbox" readonly rows="2" onfocus="this.select()">${esc(c.ek)}</textarea><div class="btns"><button onclick="copyText(document.getElementById('lnkbox').value).then(()=>toast('Key copied'))">Copy key</button><button class="sec" onclick="mdlClose()">Close</button></div>`)};
+window.clubRemove=code=>{const c=cFind(code);if(!c)return;if(!confirm('Remove “'+c.name+'” from this phone?'+(c.ek?' You will need the organiser key to manage it again.':'')))return;clubsSet(clubsGet().filter(x=>x.code!==code));renderClubs()};
+window.TDCL={get:clubsGet,open:(c,k)=>clubOpen(c,k)}; // test hooks (tests/share-e2e.js)
+window.copyText=copyText;
+async function clubAuto(){if(!LIVE||!navigator.onLine)return;for(const c of clubsGet()){if(c.t&&Date.now()-c.t<600000)continue;try{await clubSync(c.code,0)}catch(e){}}}
+// -- shared round --
+function roundURL(E){return baseURL()+'#/round='+E.id+(E.sk?'.'+E.sk:'')}
+let _skBusy=null;
+function ensureSK(){const E=S.ev;if(!E||E.role!=='org'||E.sk||!LIVE)return Promise.resolve(false);if(_skBusy)return _skBusy;
+ _skBusy=(async()=>{const sk=rid(20);try{await TDC.rpc('te_set_skey',{p_id:E.id,p_wkey:E.k,p_skey:sk});E.sk=sk;E.skx=0;_save();return true}catch(e){E.skx=e.kind==='missing'?1:0;_save();return false}finally{_skBusy=null;if(S.tab==='event')renderEvent()}})();return _skBusy}
+window.evShareRound=async()=>{const E=S.ev;if(!E)return;if(E.role==='org'&&!E.sk)await ensureSK();
+ const r=await shareOrCopy({title:'TeeDraw round – '+E.name,text:`⛳ ${E.name}\nOpen to get the same scorecard, players and draw${E.sk?' (you can enter scores for your group)':' (view only)'}:`,url:roundURL(E)});if(r!=='cancel')track('round_shared',{via:r,sk:E.sk?1:0})};
+window.evCopyRound=async()=>{if(await copyText(roundURL(S.ev)))toast('Round link copied');else shareOrCopy({url:roundURL(S.ev)})};
+function openRound(id,k){JOIN={id,k:k||'',kt:k?'s':null,o:null};LVID=null;S.tab='event';history.replaceState(null,'',baseURL());setTab('event');BE.get(id).then(o=>{JOIN&&JOIN.id===id&&(JOIN.o=o||'missing');renderEvent()},()=>{JOIN&&(JOIN.o='err');renderEvent()})}
+window.evFollowLive=()=>{if(!LVID)return;const id=LVID;LVID=null;history.replaceState(null,'',baseURL());openRound(id,'')};
+// -- route handling (#/roster=, #/club=, #/round=) --
+function handleRoute(){const r=shareRoute(location.hash);if(!r)return;history.replaceState(null,'',baseURL());
+ if(r.t==='roster'){setTab('players');const L=rosterDecode(r.v);if(!L||!L.length){toast('Could not read that player list link',3000);return}importAsk(L,'from a friend');return}
+ if(r.t==='club'){setTab('players');if(!r.code){toast('That club code looks wrong');return}clubForm('join');$('cj-code').value=clubFmt(r.code);if(r.ek)$('cj-key').value=r.ek;clubOpen(r.code,r.ek);return}
+ if(r.t==='round'){openRound(r.id,r.k)}}
+addEventListener('hashchange',()=>{if(shareRoute(location.hash))handleRoute()});
+// -- suggest a feature (queued offline, sent through te_submit_suggestion; needs supabase-share.sql) --
+const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v13',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
+const sugGet=()=>jget(SUGQ,[]).filter(x=>x&&x.text&&Date.now()-(x.t||0)<30*864e5);
+const sugSet=a=>jset(SUGQ,a);
+function devId(){let d=localStorage.getItem(SUGD);if(!d){d=rid(16);localStorage.setItem(SUGD,d)}return d}
+let _sugBusy=false;
+async function sugFlush(){if(_sugBusy)return'busy';_sugBusy=true;let why='';try{
+ for(const it of sugGet()){try{await TDC.rpc('te_submit_suggestion',{p_text:it.text,p_name:it.name||null,p_contact:it.contact||null,p_category:it.category||null,p_version:APPV,p_dev:devId(),p_ref:it.ref});sugSet(sugGet().filter(x=>x.ref!==it.ref));track('suggestion_sent',{})}
+  catch(e){if(e.kind==='reject'){sugSet(sugGet().filter(x=>x.ref!==it.ref));continue}why=e.kind||'net';break}}
+ }finally{_sugBusy=false}return sugGet().length?(why||'net'):'sent'}
+window.sugOpen=()=>{const q=sugGet().length;mdl(`<h2>💡 Suggest a feature</h2><div class="mut">Tell us what would make TeeDraw better.</div>
+ <label>Category <span class="mut">(optional)</span></label><select id="sg-cat"><option value="">Choose…</option>${SUG_CAT.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('')}</select>
+ <label>Your suggestion</label><textarea id="sg-text" maxlength="500" rows="5" placeholder="e.g. Add a skins calculator for the 19th hole" oninput="document.getElementById('sg-n').textContent=this.value.length"></textarea><div class="mut" style="text-align:right"><span id="sg-n">0</span>/500</div>
+ <label>Name <span class="mut">(optional)</span></label><input id="sg-name" maxlength="60" autocomplete="off" placeholder="First name or nickname">
+ <label>Email or phone <span class="mut">(optional – only if you’d like a reply)</span></label><input id="sg-contact" maxlength="100" autocomplete="off" placeholder="Leave blank to stay anonymous">
+ <div class="mut" style="margin:8px 0">🔒 Don’t include personal info; suggestions are read by the TeeDraw team.</div>
+ ${q?`<div class="mut">${q} earlier suggestion${q>1?'s':''} waiting to send.</div>`:''}
+ <div class="btns"><button onclick="sugSend()">Send suggestion</button><button class="sec" onclick="mdlClose()">Cancel</button></div>`);setTimeout(()=>{const t=$('sg-text');t&&t.focus()},60)};
+window.sugSend=async()=>{const text=($('sg-text').value||'').replace(/\s+/g,' ').trim().slice(0,500);if(text.length<5){toast('Please write a few words first');return}
+ const last=+localStorage.getItem(SUGT)||0;if(Date.now()-last<60000){toast('Thanks! Please wait a minute before sending another one.',3000);return}
+ if(sugGet().length>=5){toast('You have several suggestions waiting to send – they’ll go when you’re online.',3500);return}
+ const it={ref:rid(14),text,name:shName($('sg-name').value).slice(0,60),contact:($('sg-contact').value||'').trim().slice(0,100),category:$('sg-cat').value,t:Date.now()};
+ sugSet(sugGet().concat([it]));localStorage.setItem(SUGT,String(Date.now()));
+ mdl('<h2>Sending…</h2>');const r=await sugFlush();
+ const msg=r==='sent'?'Your suggestion has been sent to the TeeDraw team. We really appreciate it!':r==='missing'?'It’s saved on this phone and will be sent as soon as suggestions are switched on.':r==='later'?'It’s saved and will be sent a little later.':'You’re offline, so it’s saved on this phone and will be sent automatically when you’re back online.';
+ mdl(`<h2>Thank you! 🙌</h2><div style="margin:8px 0">${msg}</div><div class="btns"><button onclick="mdlClose()">Done</button></div>`)};
+window.TDSUG={q:sugGet,flush:sugFlush};
+addEventListener('online',()=>{sugFlush()});setTimeout(()=>{if(sugGet().length)sugFlush()},3500);
+window.SHARE_READY=1;handleRoute();setTimeout(clubAuto,2500);renderClubs();rLinkInfo();
+
 }
-</script></body></html>
+</script><div id="mdl" class="mdl hidden" onclick="if(event.target===this)mdlClose()"></div></body></html>
