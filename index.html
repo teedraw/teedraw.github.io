@@ -99,7 +99,7 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
 .pchip{background:#e3efe0;color:var(--g);padding:6px 12px;border-radius:99px;font-size:14px;margin:0 6px 6px 0;font-weight:600}.pchip small{background:var(--g2);color:#fff;border-radius:99px;padding:0 7px;font-size:11px;margin-left:3px}.hpl{display:flex;flex-wrap:wrap}
 .hwarn{background:#fef3c7;color:#78350f;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}a.pn{color:var(--g);font-weight:700;text-decoration:underline;cursor:pointer}
 .pst{background:#f3f8f0;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:14px}.spark{width:100%;height:auto;display:block;margin-top:4px;background:#f8fbf6;border-radius:10px}button.del{color:var(--red)}
-.hro td.cell{cursor:default}input[type=search]{width:100%}
+.hro td.cell{cursor:default}.solo{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #22c55e;padding:10px 12px}.solo button{flex:0 0 auto;width:auto}.solosum{margin-top:10px}.solosum table{font-size:14px}.solosum td,.solosum th{padding:5px 4px}.solosum .big{font-size:18px;font-weight:800;color:var(--g)}.rchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.rchips button{background:#e3efe0;color:var(--g);padding:6px 12px;border-radius:99px;font-size:14px}.rchips button.on{background:var(--g2);color:#fff}input[type=search]{width:100%}
 </style></head><body>
 <header><svg id="logo" onclick="logoTap()" style="cursor:pointer" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 21V3l10 4-10 4"/><ellipse cx="10" cy="21" rx="7" ry="1.5"/></svg><h1>TeeDraw</h1><button class="sug" onclick="sugOpen()" aria-label="Suggest a feature" title="Suggest a feature">💡</button><button class="hsv" onclick="saveRound()" aria-label="Save round to History">💾 Save</button><button class="pro" onclick="proInfo()">PRO soon</button></header>
 <div id="inst" class="hidden"></div>
@@ -107,6 +107,7 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
 <div class="card hidden" id="nearby"></div>
 <!-- PLAYERS -->
 <section id="v-players">
+ <div class="card solo" id="solocard"></div>
  <div class="card" id="histcard"></div>
  <div class="card" id="rostercard"><h2 style="display:flex;justify-content:space-between;align-items:center">My players <span class="rcount" id="rcount">0 ticked</span></h2>
   <div class="mut">Your saved roster stays on this phone. Tick who’s playing today – the draw uses ticked players (plus any extra names below).</div>
@@ -159,9 +160,9 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
  <div class="card"><div class="row"><h2 style="margin:0">Scorecard</h2><select id="gsel" onchange="S.cg=+this.value;save();renderScore()"></select></div>
   <div class="dots" id="dots" style="margin-top:10px"></div>
   <div class="hole"><button class="sec sm" onclick="go(-1)">◀ Prev</button><div style="text-align:center"><div class="hn" id="hn"></div><div class="mut" id="hinfo"></div></div><button class="sec sm" onclick="go(1)">Next ▶</button></div>
-  <div id="prows"></div>
+  <div id="prows"></div><div id="solosum" class="solosum hidden"></div>
   <details style="margin-top:10px"><summary class="mut">Handicaps (course/playing)</summary><div id="hcps"></div></details></div>
- <div class="card"><h2>Group card</h2><div style="overflow-x:auto" id="gcard"></div></div>
+ <div class="card"><h2 id="gcardh">Group card</h2><div style="overflow-x:auto" id="gcard"></div></div>
  <div class="card"><h2>Save this round</h2><div class="hsave"></div><div class="mut" style="margin-top:6px">Saved rounds stay on this phone only. A finished round saves by itself.</div></div>
 </section>
 <!-- BOARD -->
@@ -175,7 +176,7 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
 <section id="v-card" class="hidden">
  <div class="hsave"></div>
  <div class="row" style="margin-bottom:8px"><select id="cgsel" onchange="S.cg=+this.value;save();renderCard()"></select><select id="ccsel" onchange="S.course=JSON.parse(JSON.stringify(S.courses[+this.value]));save();renderCard()"></select></div>
- <div class="card" style="padding:10px"><div class="row"><div><label style="margin-top:0">Team format (this group)</label><select id="tfmt" onchange="setFmt(this.value)"><option value="best2">Best 2 scores count (B/B)</option><option value="best1">Best 1 (better ball)</option><option value="alliance">Alliance – pick scores</option><option value="avg">Average of the group</option></select></div><div id="kwrap" style="flex:0 0 90px"><label style="margin-top:0">Scores count</label><select id="tk" onchange="setFmt(null,+this.value)"><option>1</option><option>2</option><option>3</option></select></div></div><div class="mut" id="tnote" style="margin-top:6px"></div></div>
+ <div class="card" id="tfcard" style="padding:10px"><div class="row"><div><label style="margin-top:0">Team format (this group)</label><select id="tfmt" onchange="setFmt(this.value)"><option value="best2">Best 2 scores count (B/B)</option><option value="best1">Best 1 (better ball)</option><option value="alliance">Alliance – pick scores</option><option value="avg">Average of the group</option></select></div><div id="kwrap" style="flex:0 0 90px"><label style="margin-top:0">Scores count</label><select id="tk" onchange="setFmt(null,+this.value)"><option>1</option><option>2</option><option>3</option></select></div></div><div class="mut" id="tnote" style="margin-top:6px"></div></div>
  <div class="mc">
   <table class="mh" id="mh"></table>
   <div class="mcomp"><div><b>COMPETITION:</b> <input id="ccomp" placeholder="e.g. Saturday Alliance" onchange="S.comp=this.value;save()"></div><div><b>Date:</b> <input type="date" id="cdate" onchange="S.date=this.value;save()"> <b>Tee Time</b> <span id="ctime"></span></div><div class="club" id="cclub"></div></div>
@@ -187,7 +188,7 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
  <div class="legend"><span style="background:#bbf7d0">Birdie</span><span style="background:#fff">Par</span><span style="background:#fee2e2">Bogey</span><span style="background:#fecaca">Dbl+</span><span>• = shot received</span><span style="background:#fef08a">Par 3</span></div>
  <div class="cqr" id="cqr"></div>
  <div class="btns"><label style="display:flex;gap:6px;align-items:center;margin:0;flex:1"><input type="checkbox" id="shade" style="width:auto" onchange="S.shade=this.checked;save();renderCard()"> Shade</label><label style="display:flex;gap:6px;align-items:center;margin:0;flex:1"><input type="checkbox" id="whs" style="width:auto" onchange="S.whs=this.checked;recalcCH();save();renderCard()"> Helper: CH from HI &amp; slope</label><button class="sec sm" onclick="setTab('courses')">Courses</button></div>
- <div class="card" style="margin-top:12px"><h2>Notes · Units · Fines · Skins</h2>
+ <div class="card" id="notescard" style="margin-top:12px"><h2>Notes · Units · Fines · Skins</h2>
   <label style="display:flex;gap:6px;align-items:center;margin:0 0 8px"><input type="checkbox" id="carry" style="width:auto" onchange="S.carry=this.checked;save();renderCard()"> Skins carry over on ties (skins on Stableford points)</label>
   <div id="notes"></div></div>
  <div id="pad" class="pad hidden"></div>
@@ -361,6 +362,7 @@ function hClean(r){try{
  const u=hNum(r.u,0,4e12,0),t=hNum(r.t,0,4e12,u);
  const out={v:1,id,t,u:u||t,auto:!!r.auto,date:/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')?r.date:hIso(t),comp:hStr(r.comp,60),ev:hStr(r.ev,60),course,holes,nl:holes===9?(r.nl==='Back 9'||r.nl==='Front 9'?r.nl:'9 holes'):'',lo:holes===9&&+r.lo===9?9:0,ao:holes===9&&+r.ao===9&&cpL.length>=18?9:0,par,si,
   tstart:/^\d{2}:\d{2}$/.test(r.tstart||'')?r.tstart:'07:30',tint:Math.round(hNum(r.tint,0,30,8)),groups,hcp,hi,ptee,scores,tf,carry:r.carry!==false,notes,twoPot:hNum(r.twoPot,0,99999,0),lbm:['gross','net','pts','team'].includes(r.lbm)?r.lbm:'gross'};
+ if(r.solo&&groups.length===1&&groups[0].length===1){out.solo=true;if(out.lbm==='team')out.lbm='pts'}
  out.res=hRes(out);return out}catch(e){return null}}
 // every number shown on a saved scorecard comes from here (same maths as the live card/leaderboard)
 function hCompute(s){const n=s.holes,par=s.par,si=s.si,hs=[...Array(n).keys()],sh=(p,h)=>strokesOn(s.hcp[p]||0,si[h],n,n===9?si:undefined),rows=[],grids=[];
@@ -378,7 +380,7 @@ function hRes(s){const c=hCompute(s),m=s.lbm;let win=null;
  const sk={};c.skinsBy.forEach((k,gi)=>s.groups[gi].forEach((p,i)=>{const v=k.won[i]+((s.notes[p]||{}).skins||0);if(v)sk[p]=v}));
  return{m,n:c.rows.length,done:c.complete,win,rows:c.rows.map(r=>({p:r.p,gi:r.gi,g:r.g,net:r.net,pts:r.pts,th:r.th,to:r.to,nto:r.nto})),teams:c.teams.filter(t=>t.thru).map(t=>({gi:t.gi,tot:hR1(t.tot),thru:t.thru})),sk}}
 // snapshot of the live round S. x = {par,si (the holes played), lo, ao, nl, auto, t}
-function hBuild(S,x,now,id){x=x||{};return hClean({id,t:x.t||now,u:now,auto:x.auto,date:S.date,comp:S.comp,ev:S.ev&&S.ev.name||'',course:S.course,holes:S.holes,nl:x.nl,lo:x.lo,ao:x.ao,par:x.par,si:x.si,tstart:S.tstart,tint:S.tint,groups:S.groups,hi:S.hi,hcp:S.hcp,ptee:S.ptee,scores:S.scores,tf:S.tf,carry:S.carry,notes:S.notes,twoPot:S.twoPot,lbm:S.lbm})}
+function hBuild(S,x,now,id){x=x||{};return hClean({id,t:x.t||now,u:now,auto:x.auto,date:S.date,comp:S.comp,ev:S.ev&&S.ev.name||'',course:S.course,holes:S.holes,nl:x.nl,lo:x.lo,ao:x.ao,par:x.par,si:x.si,tstart:S.tstart,tint:S.tint,groups:S.groups,hi:S.hi,hcp:S.hcp,ptee:S.ptee,scores:S.scores,tf:S.tf,carry:S.carry,notes:S.notes,twoPot:S.twoPot,lbm:S.lbm,solo:!!S.solo})}
 const hSort=l=>l.slice().sort((a,b)=>(a.date<b.date?1:a.date>b.date?-1:0)||b.t-a.t||(a.id<b.id?-1:1));
 function hMerge(mine,inc,max){max=max||HIST_MAX;const out=mine.slice(),idx=new Map(out.map((r,i)=>[r.id,i]));let added=0,updated=0,skipped=0,invalid=0,capped=0;
  for(const x of inc){const c=hClean(x);if(!c){invalid++;continue}
@@ -386,11 +388,11 @@ function hMerge(mine,inc,max){max=max||HIST_MAX;const out=mine.slice(),idx=new M
   if(out.length>=max){capped++;continue}idx.set(c.id,out.length);out.push(c);added++}
  return{list:hSort(out),added,updated,skipped,invalid,capped}}
 function hFilter(list,q){const toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);if(!toks.length)return list;
- return list.filter(s=>{const hay=[s.course.name,s.comp,s.ev,s.date,s.nl].concat(s.groups.flat()).join('\n').toLowerCase();return toks.every(t=>hay.includes(t))})}
+ return list.filter(s=>{const hay=[s.course.name,s.comp,s.ev,s.date,s.nl,s.solo?'solo':''].concat(s.groups.flat()).join('\n').toLowerCase();return toks.every(t=>hay.includes(t))})}
 function hPlayers(list){const m=new Map();for(const s of list)for(const r of s.res.rows){if(!r.th)continue;const k=shLc(r.p),e=m.get(k)||{n:r.p,count:0};e.count++;m.set(k,e)}
  return[...m.values()].sort((a,b)=>b.count-a.count||a.n.localeCompare(b.n))}
 function hPlayerHist(list,name){const k=shLc(name),rounds=[];
- for(const s of list){const r=s.res.rows.find(x=>shLc(x.p)===k);if(!r||!r.th)continue;rounds.push({id:s.id,date:s.date,t:s.t,course:s.course.name,holes:s.holes,nl:s.nl,p:r.p,g:r.g,net:r.net,pts:r.pts,th:r.th,to:r.to,nto:r.nto,ch:s.hcp[r.p]||0,full:r.th===s.holes})}
+ for(const s of list){const r=s.res.rows.find(x=>shLc(x.p)===k);if(!r||!r.th)continue;rounds.push({id:s.id,date:s.date,t:s.t,course:s.course.name,holes:s.holes,nl:s.nl,p:r.p,g:r.g,net:r.net,pts:r.pts,th:r.th,to:r.to,nto:r.nto,ch:s.hcp[r.p]||0,full:r.th===s.holes,solo:!!s.solo})}
  rounds.sort((a,b)=>(a.date<b.date?-1:a.date>b.date?1:0)||a.t-b.t);
  const stat=h=>{const f=rounds.filter(r=>r.holes===h&&r.full),av=k=>f.length?Math.round(f.reduce((a,r)=>a+r[k],0)/f.length*10)/10:null;
   return{n:f.length,avgG:av('g'),avgPts:av('pts'),avgTo:av('to'),bestPts:f.length?Math.max(...f.map(r=>r.pts)):null,bestG:f.length?Math.min(...f.map(r=>r.g)):null}};
@@ -415,8 +417,10 @@ function hEncode(s){const o=JSON.parse(JSON.stringify(s));delete o.res;delete o.
  const raw=new TextEncoder().encode(JSON.stringify(o)),z=lzc(raw);return z.length<raw.length?'2'+b64uEnc(z):'1'+b64uEnc(raw)}
 function hDecode(p){p=String(p||'');if(p.length<2||p.length>40000)return null;const u=b64uDec(p.slice(1));if(!u)return null;const raw=p[0]==='1'?u:p[0]==='2'?lzd(u,120000):null;if(!raw)return null;
  try{return hClean(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw)))}catch(e){return null}}
+// solo round: gross / nett / points split into Out, In and Total for one player (sc = scores for the holes played)
+function soloSplit(sc,par,si,hcp,n){const z=()=>({g:0,net:0,pts:0,th:0,pp:0}),o={out:z(),inn:z(),tot:z()};for(let h=0;h<n;h++){const v=+(sc||[])[h]||0;if(!v)continue;const so=strokesOn(hcp||0,si[h],n,n===9?si:undefined),k=n===18&&h>=9?'inn':'out';for(const t of [o[k],o.tot]){t.g+=v;t.net+=v-so;t.pts+=stbl(v,par[h],so);t.th++;t.pp+=par[h]}}return o}
 function hURL(base,s){return base+'#/saved='+hEncode(s)}
-if(typeof module!=='undefined')module.exports={b64uEnc,hClean,hCompute,hBoard,hTeamBoard,hRes,hBuild,hSort,hMerge,hFilter,hPlayers,hPlayerHist,hUsage,hLoad,hSave,hExport,hImportText,hEncode,hDecode,hURL,hNewId,HIST_MAX,HIST_WARN,HIST_KEY,HIST_BAD,b64uDec,lzc,lzd,rosterClean,rosterEncode,rosterDecode,rosterURL,rosterMerge,clubNorm,clubOk,clubGen,clubFmt,clubPack,clubUnpack,shareRoute,CODE_AL,normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard,nineSlice,nineLabel};
+if(typeof module!=='undefined')module.exports={soloSplit,b64uEnc,hClean,hCompute,hBoard,hTeamBoard,hRes,hBuild,hSort,hMerge,hFilter,hPlayers,hPlayerHist,hUsage,hLoad,hSave,hExport,hImportText,hEncode,hDecode,hURL,hNewId,HIST_MAX,HIST_WARN,HIST_KEY,HIST_BAD,b64uDec,lzc,lzd,rosterClean,rosterEncode,rosterDecode,rosterURL,rosterMerge,clubNorm,clubOk,clubGen,clubFmt,clubPack,clubUnpack,shareRoute,CODE_AL,normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard,nineSlice,nineLabel};
 </script>
 <script>
 if(typeof document!=='undefined'){
@@ -444,7 +448,7 @@ const _t=track;track=(e,d)=>{if(ANALYTICS_ID&&!(window.umami&&umami.track)){pend
 window.track=(...a)=>track(...a);
 const courseTag=()=>SAFE_COURSES().includes(S.course.name)?S.course.name.slice(0,60):'custom';
 const $=id=>document.getElementById(id);
-function save(){progress();try{localStorage.setItem(KEY,JSON.stringify(S,(k,v)=>k==='courses'&&Array.isArray(v)?v.filter(c=>c.src!=='community'):v))}catch(e){};if(window.histTouch)histTouch()}
+function save(){if(S.solo&&(S.ev||!(S.groups&&S.groups.length===1&&S.groups[0].length===1)))S.solo=false;progress();try{localStorage.setItem(KEY,JSON.stringify(S,(k,v)=>k==='courses'&&Array.isArray(v)?v.filter(c=>c.src!=='community'):v))}catch(e){};if(window.histTouch)histTouch()}
 function progress(){if(!S.groups||!S.groups.length||typeof track!=='function')return;const all=S.groups.flat();
  const any=all.some(p=>(S.scores[p]||[]).some(Boolean));
  if(any&&!S.started){S.started=true;track('round_started',{holes:S.holes,players:all.length,course:courseTag()});track('course_used',{course:courseTag(),holes:S.holes})}
@@ -455,7 +459,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function enc(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))))}
 function link(){return location.href.split('#')[0]+'#d='+enc({g:S.groups,h:S.holes,nn:isBack()?'back':undefined,t:S.tstart,i:S.tint,c:S.course.name,p:S.course.par,s:S.course.si,m:S.course.m,e:S.course.tee,te:S.course.tees})}
-function loadHash(){const m=location.hash.match(/#d=([^&]+)/);if(!m)return;try{const d=dec(m[1]);S.groups=d.g;S.holes=d.h;S.nine=d.nn==='back'?'back':'front';S.tstart=d.t;S.tint=d.i;S.players=d.g.flat();if(d.p){S.course={name:d.c,par:d.p,si:d.s,m:d.m,tee:d.e,tees:d.te};if(!S.courses.some(c=>c.name===d.c))S.courses.push(JSON.parse(JSON.stringify(S.course)))}S.scores={};S.histId=S.noAuto=null;S.tab='draw';save();toast('Draw loaded from link');S._fromLink=1}catch(e){toast('Could not read shared link')}}
+function loadHash(){const m=location.hash.match(/#d=([^&]+)/);if(!m)return;try{const d=dec(m[1]);S.groups=d.g;S.holes=d.h;S.nine=d.nn==='back'?'back':'front';S.tstart=d.t;S.tint=d.i;S.players=d.g.flat();if(d.p){S.course={name:d.c,par:d.p,si:d.s,m:d.m,tee:d.e,tees:d.te};if(!S.courses.some(c=>c.name===d.c))S.courses.push(JSON.parse(JSON.stringify(S.course)))}S.scores={};S.solo=false;S.histId=S.noAuto=null;S.tab='draw';save();toast('Draw loaded from link');S._fromLink=1}catch(e){toast('Could not read shared link')}}
 loadHash();
 track('app_opened',{via:S._fromLink?'shared_link':'direct',holes:S.holes});if(S._fromLink){track('shared_link_opened',{groups:S.groups.length,holes:S.holes});delete S._fromLink}
 // players
@@ -519,13 +523,13 @@ function renderDraw(){
  $('nine-hint').textContent=S.holes!==9?'':ns?(isBack()?'Back 9 = holes 10–18 of ':'Front 9 = holes 1–9 of ')+S.course.name+'. Handicap is halved and stroke index is ranked within the nine.':'9-hole card: holes 1–9.';
  seg('seg-size',[['auto','Auto'],[4,'4-ball'],[3,'3-ball'],[2,'2-ball']],S.size,v=>{if(locked())return noEdit();S.size=v;save();renderDraw()});
  $('tstart').value=S.tstart;$('tint').value=S.tint;
- $('groups').innerHTML=S.groups.map((g,i)=>`<div class="card grp"><h3><span>Group ${i+1}</span><span>⛳ ${addMin(S.tstart,i*S.tint)}</span></h3><ol>${g.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`).join('');
- $('drawact').classList.toggle('hidden',!S.groups.length);
+ $('groups').innerHTML=S.solo&&S.groups.length?`<div class="card grp"><h3><span>🏌️ Solo round</span><span>⛳ ${esc(S.tstart)}</span></h3><div>${esc(S.groups[0][0])} · ${esc(S.course.name)}${nameTag()}</div><div class="mut" style="margin-top:6px">No draw needed. To play with others, tick 2+ players and tap Randomise (that replaces the solo scorecard).</div></div>`:S.groups.map((g,i)=>`<div class="card grp"><h3><span>Group ${i+1}</span><span>⛳ ${addMin(S.tstart,i*S.tint)}</span></h3><ol>${g.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`).join('');
+ $('drawact').classList.toggle('hidden',!S.groups.length||!!S.solo);
 }
 $('tstart').onchange=e=>{if(locked()){renderDraw();return noEdit()}S.tstart=e.target.value||'07:30';save();renderDraw()};$('tint').onchange=e=>{if(locked()){renderDraw();return noEdit()}S.tint=Math.max(0,+e.target.value||0);save();renderDraw()};
-window.randomise=()=>{if(locked())return noEdit();const P=pool();if(P.length<2){toast('Tick or add at least 2 players');setTab('players');return}
+window.randomise=()=>{if(locked())return noEdit();const P=pool();if(P.length===1){setTab('players');soloOpen(P[0]);toast('Just one player – starting a solo round',2600);return}if(P.length<2){toast('Tick or add at least 2 players');setTab('players');return}
  if(S.groups.length&&Object.keys(S.scores).length&&!confirm('Reshuffle clears scores. Continue?'))return;
- S.groups=makeGroups(P,S.size);S.hi=S.hi||{};P.forEach(p=>{const r=R.find(r=>r.n===p);if(r&&r.hi!==''&&r.hi!=null&&(S.hi[p]==null||S.hi[p]===''))S.hi[p]=r.hi});if(typeof recalcCH==='function')recalcCH();S.scores={};S.started=S.finished=false;S.histId=S.noAuto=null;track('draw_made',{players:P.length,groups:S.groups.length,holes:S.holes,size:String(S.size)});S.cg=0;S.ch=0;save();renderDraw();history.replaceState(null,'',link())};
+ S.groups=makeGroups(P,S.size);S.solo=false;S.hi=S.hi||{};P.forEach(p=>{const r=R.find(r=>r.n===p);if(r&&r.hi!==''&&r.hi!=null&&(S.hi[p]==null||S.hi[p]===''))S.hi[p]=r.hi});if(typeof recalcCH==='function')recalcCH();S.scores={};S.started=S.finished=false;S.histId=S.noAuto=null;track('draw_made',{players:P.length,groups:S.groups.length,holes:S.holes,size:String(S.size)});S.cg=0;S.ch=0;save();renderDraw();history.replaceState(null,'',link())};
 function drawText(){return `⛳ *TeeDraw – ${S.course.name}* (${S.holes===9?(nineName()||'9 holes'):S.holes+' holes'})\n\n`+S.groups.map((g,i)=>`*Group ${i+1}* – ${addMin(S.tstart,i*S.tint)}\n`+g.map(p=>'• '+p).join('\n')).join('\n\n')+`\n\nOpen the draw & scorecard:\n${link()}`}
 function wa(t){window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
 window.shareDraw=()=>{track('draw_shared',{groups:S.groups.length,holes:S.holes});wa(drawText())};
@@ -555,9 +559,9 @@ window.clr=i=>{if(ro())return noEdit();const p=S.groups[S.cg][i];sc(p)[S.ch]=nul
 window.setH=(p,v)=>{if(ro())return noEdit();S.hcp[p]=Math.max(0,Math.min(54,+v||0));save();renderScore()};
 function renderScore(){
  renderCourse();
- if(!S.groups.length){$('prows').innerHTML='<p class="mut">Randomise a draw first.</p>';$('gsel').innerHTML='';$('gcard').innerHTML='';$('dots').innerHTML='';$('hcps').innerHTML='';return}
+ if(!S.groups.length){$('solosum').classList.add('hidden');$('prows').innerHTML='<p class="mut">Randomise a draw first – or tap <b>Play solo</b> on the Players tab.</p>';$('gsel').innerHTML='';$('gcard').innerHTML='';$('dots').innerHTML='';$('hcps').innerHTML='';return}
  S.cg=Math.min(S.cg,S.groups.length-1);const g=S.groups[S.cg],par=cpar(),si=csi(),LO=lo();
- $('gsel').innerHTML=S.groups.map((x,i)=>`<option value="${i}" ${i===S.cg?'selected':''}>Group ${i+1}</option>`).join('');
+ $('gsel').innerHTML=S.groups.map((x,i)=>`<option value="${i}" ${i===S.cg?'selected':''}>Group ${i+1}</option>`).join('');$('gsel').classList.toggle('hidden',!!S.solo);if(window.soloSum)soloSum();
  $('dots').innerHTML=par.map((_,h)=>`<button class="${h===S.ch?'on':''} ${g.every(p=>sc(p)[h])?'done':''}" onclick="hole(${h})">${h+1+LO}</button>`).join('');
  $('hn').textContent='Hole '+(S.ch+1+LO);$('hinfo').textContent=`Par ${par[S.ch]} · SI ${si[S.ch]}`+nameTag();
  $('prows').innerHTML=g.map((p,i)=>{const v=sc(p)[S.ch],t=tot(p),so=shots(p,S.ch,si);return `<div class="prow"><div class="nm">${esc(p)}${so?' '+'•'.repeat(so):''}<small>${t.g?`${t.g} (${rel(t.to)}) thru ${t.th}`:'–'}${S.hcp[p]?` · net ${rel(t.nto)}`:''}</small></div><div class="stp"><button class="sec" onclick="st(${i},-1)">−</button><div class="v ${v?cls(v-par[S.ch]):''}" ondblclick="clr(${i})">${v||'·'}</div><button onclick="st(${i},1)">+</button></div></div>`}).join('');
@@ -569,11 +573,12 @@ function renderScore(){
 function board(){const m=S.lbm;return S.groups.flatMap((g,gi)=>g.map(p=>({p,gi,...tot(p)}))).filter(r=>r.th).sort((a,b)=>(m==='pts'?b.pts-a.pts:m==='net'?a.nto-b.nto:a.to-b.to)||b.th-a.th)}
 function teamBoard(){return S.groups.map((g,i)=>({i,g,...groupTeam(i)})).filter(r=>r.thru).sort((a,b)=>b.tot-a.tot||b.thru-a.thru)}
 function extras(){return S.groups.map((g,gi)=>{const sk=skins(ptsGrid(g),S.carry!==false);return g.map((p,i)=>{const q=(S.notes||{})[p]||{};return{p,gi,sk:sk.won[i]+(+q.skins||0),u:+q.units||0,f:+q.fines||0,t:q.text||''}})}).flat()}
-function renderBoard(){if(S.lbm==='team'){seg('seg-lb',[['gross','Gross'],['net','Nett'],['pts','Points'],['team','Teams']],S.lbm,v=>{S.lbm=v;save();renderBoard()});
+const LBO=()=>S.solo?[['gross','Gross'],['net','Nett'],['pts','Points']]:[['gross','Gross'],['net','Nett'],['pts','Points'],['team','Teams']];
+function renderBoard(){if(S.solo&&S.lbm==='team')S.lbm='pts';if(S.lbm==='team'){seg('seg-lb',LBO(),S.lbm,v=>{S.lbm=v;save();renderBoard()});
  const b=teamBoard();$('lb').innerHTML='<tr><th>#</th><th style="text-align:left">Group</th><th>Format</th><th>Thru</th><th>Pts</th></tr>'+(b.map((r,k)=>`<tr><td>${k+1}</td><td>G${r.i+1} <span class="mut">${r.g.length}-ball · ${r.g.map(esc).join(', ')}</span></td><td class="mut">${fmtLabel(r.o)}</td><td>${r.thru===S.holes?'F':r.thru}</td><td><b>${r1(r.tot)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="mut">No scores yet.</td></tr>')+(new Set(b.map(r=>r.g.length)).size>1&&b.some(r=>r.o.f!=='avg')?'<tr><td colspan="5" class="mut">Groups are different sizes: pick “Average of the group” on each card for a fair comparison.</td></tr>':'');return}
- seg('seg-lb',[['gross','Gross'],['net','Nett'],['pts','Points'],['team','Teams']],S.lbm,v=>{S.lbm=v;save();renderBoard()});
+ seg('seg-lb',LBO(),S.lbm,v=>{S.lbm=v;save();renderBoard()});
  const b=board();let pos=0,last=null;
- $('lb').innerHTML='<tr><th>#</th><th style="text-align:left">Player</th><th>Thru</th><th>'+(S.lbm==='pts'?'Gross':S.lbm==='net'?'Nett':'Gross')+'</th><th>'+(S.lbm==='pts'?'Pts':'To par')+'</th></tr>'+(b.map((r,i)=>{const k=S.lbm==='pts'?r.pts:S.lbm==='net'?r.nto:r.to;if(k!==last){pos=i+1;last=k}return `<tr><td>${pos}</td><td>${esc(r.p)} <span class="mut">G${r.gi+1}</span></td><td>${r.th===S.holes?'F':r.th}</td><td>${S.lbm==='net'?r.net:r.g}</td><td class="${S.lbm==='pts'?'':cls(k)}"><b>${S.lbm==='pts'?k:rel(k)}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="mut">No scores yet.</td></tr>')}
+ $('lb').innerHTML='<tr><th>#</th><th style="text-align:left">Player</th><th>Thru</th><th>'+(S.lbm==='pts'?'Gross':S.lbm==='net'?'Nett':'Gross')+'</th><th>'+(S.lbm==='pts'?'Pts':'To par')+'</th></tr>'+(b.map((r,i)=>{const k=S.lbm==='pts'?r.pts:S.lbm==='net'?r.nto:r.to;if(k!==last){pos=i+1;last=k}return `<tr><td>${pos}</td><td>${esc(r.p)} ${S.solo?"":`<span class="mut">G${r.gi+1}</span>`}</td><td>${r.th===S.holes?'F':r.th}</td><td>${S.lbm==='net'?r.net:r.g}</td><td class="${S.lbm==='pts'?'':cls(k)}"><b>${S.lbm==='pts'?k:rel(k)}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="mut">No scores yet.</td></tr>')}
 window.shareBoard=()=>{track('leaderboard_shared',{mode:S.lbm,holes:S.holes});
  const inc=$('incx').checked,TC=inc?twoList():[],tct=TC.length?`\n\n*Two Clubs* (pot R${+S.twoPot||0}${S.twoPot?`, R${Math.round(S.twoPot/TC.length*100)/100} each`:''})\n`+TC.map(t=>`${t.p} – hole ${t.h+1+lo()}`).join('\n'):'',X=inc?extras():[],xs=X.filter(x=>x.sk||x.u||x.f||x.t),xt=xs.length?'\n\n*Skins · Units · Fines*\n'+xs.map(x=>`${x.p}: ${x.sk} skins${x.u?`, ${x.u} units`:''}${x.f?`, R${x.f} fines`:''}${x.t?` – ${x.t}`:''}`).join('\n')+`\nTotal: ${X.reduce((a,x)=>a+x.sk,0)} skins · ${X.reduce((a,x)=>a+x.u,0)} units · R${X.reduce((a,x)=>a+x.f,0)} fines`:'';
  if(S.lbm==='team'){wa(`🏆 *TeeDraw team leaderboard – ${S.course.name}${nameTag()}*\n\n`+teamBoard().map((r,k)=>`${k+1}. Group ${r.i+1} (${r.g.join(', ')}) – ${r1(r.tot)} pts [${fmtLabel(r.o)}, ${r.thru===S.holes?'F':'thru '+r.thru}]`).join('\n')+xt+tct+'\n\nMade with TeeDraw');return}const b=board();wa(`🏆 *TeeDraw leaderboard – ${S.course.name}${nameTag()}* (${S.lbm==='pts'?'Stableford':S.lbm==='net'?'nett':'gross'})\n\n`+b.map((r,i)=>`${i+1}. ${r.p} – ${S.lbm==='pts'?r.pts+' pts':rel(S.lbm==='net'?r.nto:r.to)} (${S.lbm==='net'?r.net:r.g}, ${r.th===S.holes?'F':'thru '+r.th})`).join('\n')+xt+tct+'\n\nMade with TeeDraw')};
@@ -606,6 +611,7 @@ function renderCard(){
  $('crsr').innerHTML=`<tr><th></th>${T.map(t=>`<th style="background:${t.color};color:${t.color==='#fff'?'#123':'#fff'}">${esc(t.name.toUpperCase())}</th>`).join('')}</tr><tr><th>CR</th>${T.map(t=>`<td>${t.cr??'–'}</td>`).join('')}</tr><tr><th>SR</th>${T.map(t=>`<td>${t.sr??'–'}</td>`).join('')}</tr>`;
  if(!S.groups.length){$('cgsel').innerHTML='';$('mh').innerHTML='';$('notes').innerHTML='';$('sc').innerHTML='<p class="mut" style="padding:10px">Randomise a draw first.</p>';return}
  S.cg=Math.min(S.cg,S.groups.length-1);const g=S.groups[S.cg],o=gfmt();
+ ['tfcard','notescard'].forEach(k=>$(k).classList.toggle('hidden',!!S.solo));$('cgsel').classList.toggle('hidden',!!S.solo);
  $('tfmt').value=o.f;$('tk').value=Math.min(o.k,3);$('kwrap').style.display=o.f==='alliance'?'':'none';
  $('tnote').textContent=g.length===1?'Single player: team score = own points.':o.f==='avg'?`Total points ÷ ${g.length} players per hole, so 2-, 3- and 4-balls compare fairly.`:(o.f==='best2'&&g.length<=2)?'2-ball: best 2 = both scores count.':(o.f==='alliance'&&o.k>=g.length)?`${g.length}-ball: all ${g.length} scores count.`:(new Set(S.groups.map(x=>x.length)).size>1?'Groups differ in size: use “Average” for a fair team leaderboard.':`${fmtLabel(o)}: best ${o.f==='best1'?1:o.f==='best2'?2:o.k} Stableford score(s) per hole count.`);
  $('cgsel').innerHTML=S.groups.map((x,i)=>`<option value="${i}" ${i===S.cg?'selected':''}>Group ${i+1} · ${addMin(S.tstart,i*S.tint)}</option>`).join('');
@@ -630,7 +636,7 @@ function renderCard(){
  const team=(lab,idx,f,k)=>{const per=hs.map(hh=>teamHole(idx.map(i=>P[i][hh]),f,k,idx.length));return row(lab,(c,kk)=>`<td class="tm${kk}">${r1(per[c])}</td>`,c=>{const[a,b]=rng(c);return r1(per.slice(a,b).reduce((x,v)=>x+(v||0),0))||''},null,'tr')};
  g.slice(0,2).forEach((p,i)=>h+=prow2(p,i));
  if(g.length>=2)h+=team('B/B SCORE <small>A+B</small>',[0,1],'best1',1);
- h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
+ if(!S.solo)h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
  if(g.length>=4)h+=team('B/B SCORE <small>C+D</small>',[2,3],'best1',1);
  if(g.length>2)h+=`<tr class="mk"><th class="lab">MARKER</th><td colspan="${cols.length+3}"></td></tr>`+g.slice(2).map((p,i)=>prow2(p,i+2)).join('');
  const x=$('sc').scrollLeft;$('sc').innerHTML=`<table>${h}</table>`;$('sc').scrollLeft=x;
@@ -1007,7 +1013,7 @@ window.histCard=()=>{const e=$('histcard');if(!e)return;e.innerHTML=`<div class=
 // ---- rendering ----
 const hTag=s=>s.holes===9?`<span class="tag">${esc(s.nl||'9 holes')}</span>`:'';
 function hRowHTML(s){const w=s.res.win,d=hDateLong(s.date).replace(/,/g,'');
- return `<button class="hrow" data-id="${esc(s.id)}" onclick="hOpen(this.dataset.id)"><span class="hm"><b>${esc(s.course.name)}</b> ${hTag(s)}<span class="mut" style="display:block">${esc(d)} · ${s.res.n} player${s.res.n===1?'':'s'}${s.comp?' · '+esc(s.comp):''}</span><span class="hw">${w?(s.res.done?'🏆 ':'⏳ ')+esc(w.txt):'<span class="mut">No scores</span>'}</span></span><span class="hc">›</span></button>`}
+ return `<button class="hrow" data-id="${esc(s.id)}" onclick="hOpen(this.dataset.id)"><span class="hm"><b>${esc(s.course.name)}</b> ${hTag(s)}${s.solo?'<span class="tag">Solo</span>':''}<span class="mut" style="display:block">${esc(d)} · ${s.solo?'Solo':s.res.n+' player'+(s.res.n===1?'':'s')}${s.comp?' · '+esc(s.comp):''}</span><span class="hw">${w?(s.res.done?'🏆 ':'⏳ ')+esc(w.txt):'<span class="mut">No scores</span>'}</span></span><span class="hc">›</span></button>`}
 function hListHTML(){const L=hFilter(H,HV.q);
  if(!H.length)return '<div class="mut" style="padding:8px 2px">No saved rounds yet. Finish a round and it saves by itself, or tap <b>💾 Save round</b> any time while you score.</div>';
  if(!L.length)return '<div class="mut" style="padding:8px 2px">No rounds match “'+esc(HV.q)+'”.</div>';return L.map(hRowHTML).join('')}
@@ -1038,7 +1044,7 @@ window.hGrp=i=>{HV.gi=+i;renderHistory()};window.hMode=m=>{HV.lbm=m;renderHistor
 function hLBHTML(s,m){const c=hCompute(s),nm=n=>`<a class="pn" data-n="${esc(n)}" onclick="hPlayer(this.dataset.n)">${esc(n)}</a>`;
  if(m==='team'){const b=hTeamBoard(c);return '<tr><th>#</th><th style="text-align:left">Group</th><th>Format</th><th>Thru</th><th>Pts</th></tr>'+(b.map((r,k)=>`<tr><td>${k+1}</td><td>G${r.gi+1} <span class="mut">${s.groups[r.gi].length}-ball · ${s.groups[r.gi].map(esc).join(', ')}</span></td><td class="mut">${fmtLabel(r.o)}</td><td>${r.thru===s.holes?'F':r.thru}</td><td><b>${hR1(r.tot)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="mut">No scores.</td></tr>')}
  const b=hBoard(c,m);let pos=0,last=null;
- return '<tr><th>#</th><th style="text-align:left">Player</th><th>Thru</th><th>'+(m==='pts'?'Gross':m==='net'?'Nett':'Gross')+'</th><th>'+(m==='pts'?'Pts':'To par')+'</th></tr>'+(b.map((r,i)=>{const k=m==='pts'?r.pts:m==='net'?r.nto:r.to;if(k!==last){pos=i+1;last=k}return `<tr><td>${pos}</td><td>${nm(r.p)} <span class="mut">G${r.gi+1}</span></td><td>${r.th===s.holes?'F':r.th}</td><td>${m==='net'?r.net:r.g}</td><td class="${m==='pts'?'':cls(k)}"><b>${m==='pts'?k:rel(k)}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="mut">No scores.</td></tr>')}
+ return '<tr><th>#</th><th style="text-align:left">Player</th><th>Thru</th><th>'+(m==='pts'?'Gross':m==='net'?'Nett':'Gross')+'</th><th>'+(m==='pts'?'Pts':'To par')+'</th></tr>'+(b.map((r,i)=>{const k=m==='pts'?r.pts:m==='net'?r.nto:r.to;if(k!==last){pos=i+1;last=k}return `<tr><td>${pos}</td><td>${nm(r.p)} ${s.solo?"":`<span class="mut">G${r.gi+1}</span>`}</td><td>${r.th===s.holes?'F':r.th}</td><td>${m==='net'?r.net:r.g}</td><td class="${m==='pts'?'':cls(k)}"><b>${m==='pts'?k:rel(k)}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="mut">No scores.</td></tr>')}
 // the printed-style scorecard, read-only (mirrors renderCard)
 function hCardHTML(s,gi){const c=hCompute(s),n=s.holes,hs=[...Array(n).keys()],par=s.par,si=s.si,LO=s.lo,AO=s.ao,g=s.groups[gi],o=s.tf[gi]||{f:'best2',k:2},P=c.grids[gi],
   T=s.course.tees.length?s.course.tees:[{name:s.course.tee||'Tee',color:'#fff',m:[]}],ptee=p=>T[Math.min(s.ptee[p]||0,T.length-1)];
@@ -1058,7 +1064,7 @@ function hCardHTML(s,gi){const c=hCompute(s),n=s.holes,hs=[...Array(n).keys()],p
  const team=(lab,idx,f,k)=>{const per=hs.map(hh=>teamHole(idx.map(i=>P[i][hh]),f,k,idx.length));return row(lab,(kk,yy)=>`<td class="tm${yy}">${hR1(per[kk])}</td>`,kk=>{const[a,b]=rng(kk);return hR1(per.slice(a,b).reduce((x,v)=>x+(v||0),0))||''},null,'tr')};
  g.slice(0,2).forEach((p,i)=>h+=prow2(p,i));
  if(g.length>=2)h+=team('B/B SCORE <small>A+B</small>',[0,1],'best1',1);
- h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
+ if(!s.solo)h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
  if(g.length>=4)h+=team('B/B SCORE <small>C+D</small>',[2,3],'best1',1);
  if(g.length>2)h+=`<tr class="mk"><th class="lab">MARKER</th><td colspan="${cols.length+3}"></td></tr>`+g.slice(2).map((p,i)=>prow2(p,i+2)).join('');
  const sk=c.skinsBy[gi],tc=twoClubs(s.groups,s.scores,par,n),pot=+s.twoPot||0,each=tc.length?Math.round(pot/tc.length*100)/100:0;
@@ -1066,7 +1072,7 @@ function hCardHTML(s,gi){const c=hCompute(s),n=s.holes,hs=[...Array(n).keys()],p
   +`<div class="nl"><b>Two Clubs -</b><span class="x">${tc.length?tc.map(t=>`${esc(t.p)} (H${t.h+1+LO}${t.par===3?'':', par '+t.par})`).join(', '):'none'}</span>${pot?`<span style="margin-left:auto" class="x">Pot R${pot}</span>`:''}</div>`+(tc.length&&pot?`<div class="nl x">Split: R${each} per two (${tc.length})</div>`:'');
  const crs=`<tr><th></th>${T.map(t=>`<th style="background:${t.color};color:${t.color==='#fff'?'#123':'#fff'}">${esc(t.name.toUpperCase())}</th>`).join('')}</tr><tr><th>CR</th>${T.map(t=>`<td>${t.cr??'–'}</td>`).join('')}</tr><tr><th>SR</th>${T.map(t=>`<td>${t.sr??'–'}</td>`).join('')}</tr>`;
  const tt=addMin(s.tstart,gi*s.tint);
- return `<div class="mc hro"><table class="mh">${mh}</table><div class="mut" style="margin:0 0 6px">Team format: ${fmtLabel(o)}</div>
+ return `<div class="mc hro"><table class="mh">${mh}</table>${s.solo?"":`<div class="mut" style="margin:0 0 6px">Team format: ${fmtLabel(o)}</div>`}
   <div class="mcomp"><div><b>COMPETITION:</b> ${esc(s.comp||'–')}</div><div><b>Date:</b> ${esc(s.date)} <b>Tee Time</b> ${esc(tt)}</div><div class="club">${esc(s.course.name)}${s.holes===9&&s.nl?' · '+esc(s.nl):''}</div></div>
   <div class="sc"><table>${h}</table></div><table class="crsr">${crs}</table><div class="npanel">${np}</div></div>
   <div class="legend"><span style="background:#bbf7d0">Birdie</span><span style="background:#fff">Par</span><span style="background:#fee2e2">Bogey</span><span style="background:#fecaca">Dbl+</span><span>• = shot received</span><span style="background:#fef08a">Par 3</span></div>`}
@@ -1077,15 +1083,15 @@ function hNotesHTML(s,gi){const c=hCompute(s),g=s.groups[gi],sk=c.skinsBy[gi],t=
 function hSummary(s){const r=s.res,w=r.win;return (w?(r.done?'🏆 ':'⏳ Leading: ')+w.txt:'No scores')}
 function renderHRound(el){const shared=HV.v==='shared',s=shared?HV.sh:hById(HV.id);
  if(!s){HV.v='list';return renderHistory()}
- HV.gi=Math.min(HV.gi,s.groups.length-1);const m=HV.lbm||s.lbm,gi=HV.gi;
+ HV.gi=Math.min(HV.gi,s.groups.length-1);const m=s.solo&&(HV.lbm||s.lbm)==='team'?'pts':HV.lbm||s.lbm,gi=HV.gi;
  el.innerHTML=`<div class="card"><div class="row" style="align-items:center"><button class="sec sm" style="flex:0 0 auto" onclick="${shared?'hCloseShared()':'hBack()'}">‹ ${shared?'Close':'History'}</button><span class="mut" style="text-align:right">${shared?'Shared with you':'Saved '+esc(new Date(s.u).toLocaleDateString('en-GB',{day:'numeric',month:'short'}))+(s.auto?' (auto)':'')}</span></div>
-  <h2 style="margin:10px 0 2px">${esc(s.course.name)} ${hTag(s)}</h2><div class="mut">${esc(hDateLong(s.date))} · ${s.res.n} player${s.res.n===1?'':'s'}${s.groups.length>1?' in '+s.groups.length+' groups':''}${s.comp?' · '+esc(s.comp):''}${s.ev?' · '+esc(s.ev):''}</div>
+  <h2 style="margin:10px 0 2px">${esc(s.course.name)} ${hTag(s)}</h2><div class="mut">${esc(hDateLong(s.date))} · ${s.solo?'Solo round':s.res.n+' player'+(s.res.n===1?'':'s')}${s.groups.length>1?' in '+s.groups.length+' groups':''}${s.comp?' · '+esc(s.comp):''}${s.ev?' · '+esc(s.ev):''}</div>
   <div style="margin-top:6px"><b>${esc(hSummary(s))}</b></div><div class="mut" style="margin-top:4px">${shared?'Read-only copy from a link. Nothing was sent to a server.':'Read-only copy, kept on this phone.'}</div>
   <div class="btns">${shared?`<button onclick="hSaveShared()">💾 Save to my History</button>`:`<button onclick="hDup()">🔁 Duplicate as new round</button><button class="sec" onclick="hShare()">📲 Share</button><button class="sec del" onclick="hDelete()">🗑 Delete</button>`}</div></div>
  <div class="card"><h2>Leaderboard</h2><div class="seg" id="hseg" style="margin-bottom:10px"></div><table class="lb" id="hlb">${hLBHTML(s,m)}</table><div class="mut" style="margin-top:6px">Tap a player to see all their rounds.</div></div>
- <div class="card" style="padding:10px"><div class="row" style="margin-bottom:8px"><h2 style="margin:0;flex:1">Scorecard</h2><select id="hgsel" onchange="hGrp(this.value)" style="flex:1">${s.groups.map((x,i)=>`<option value="${i}" ${i===gi?'selected':''}>Group ${i+1} · ${addMin(s.tstart,i*s.tint)}</option>`).join('')}</select></div>${hCardHTML(s,gi)}</div>
- <div class="card"><h2>Notes · Units · Fines · Skins</h2>${hNotesHTML(s,gi)}</div>`;
- seg('hseg',[['gross','Gross'],['net','Nett'],['pts','Points'],['team','Teams']],m,hMode)}
+ <div class="card" style="padding:10px"><div class="row" style="margin-bottom:8px"><h2 style="margin:0;flex:1">Scorecard</h2><select id="hgsel" onchange="hGrp(this.value)" style="flex:1"${s.solo?' class="hidden"':''}>${s.groups.map((x,i)=>`<option value="${i}" ${i===gi?'selected':''}>Group ${i+1} · ${addMin(s.tstart,i*s.tint)}</option>`).join('')}</select></div>${hCardHTML(s,gi)}</div>
+ ${s.solo?'':`<div class="card"><h2>Notes · Units · Fines · Skins</h2>${hNotesHTML(s,gi)}</div>`}`;
+ seg('hseg',s.solo?[['gross','Gross'],['net','Nett'],['pts','Points']]:[['gross','Gross'],['net','Nett'],['pts','Points'],['team','Teams']],m,hMode)}
 function renderHPlayer(el){const r=hPlayerHist(H,HV.name);if(!r.rounds.length){HV.v='list';return renderHistory()}
  const st=(h,x)=>x.n?`<div class="pst"><b>${h===18?'18 holes':'9 holes'}</b> · ${x.n} full round${x.n===1?'':'s'}<br>Avg <b>${x.avgPts}</b> pts · avg gross <b>${x.avgG}</b> (${hRel(Math.round(x.avgTo))}) · best <b>${x.bestPts}</b> pts / <b>${x.bestG}</b> gross</div>`:'';
  const ser=(r.s18.n>=r.s9.n?18:9),pts=r.rounds.filter(x=>x.holes===ser&&x.full);
@@ -1093,7 +1099,7 @@ function renderHPlayer(el){const r=hPlayerHist(H,HV.name);if(!r.rounds.length){H
   chart=`<div class="mut" style="margin-top:10px">Stableford points per ${ser}-hole round</div><svg class="spark" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Points over time"><polyline fill="none" stroke="#166534" stroke-width="2" points="${pts.map((x,i)=>X(i).toFixed(1)+','+Y(x.pts).toFixed(1)).join(' ')}"/>${pts.map((x,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(x.pts).toFixed(1)}" r="3.5" fill="#22c55e"/><text x="${X(i).toFixed(1)}" y="${(Y(x.pts)-7).toFixed(1)}" font-size="10" text-anchor="middle" fill="#334">${x.pts}</text>`).join('')}</svg>`}
  el.innerHTML=`<div class="card"><button class="sec sm" onclick="hPBack()">‹ Back</button><h2 style="margin:10px 0 2px">${esc(r.name)}</h2><div class="mut">${r.rounds.length} round${r.rounds.length===1?'':'s'} in History · simple averages use finished rounds only</div>
   ${st(18,r.s18)}${st(9,r.s9)}${!r.s18.n&&!r.s9.n?'<div class="mut" style="margin-top:8px">No finished rounds yet, so no average.</div>':''}${chart}</div>
- <div class="card"><h2>Rounds (newest first)</h2>${r.rounds.slice().reverse().map(x=>`<button class="hrow" data-id="${esc(x.id)}" onclick="hOpen(this.dataset.id)"><span class="hm"><b>${esc(x.course)}</b> ${x.holes===9?`<span class="tag">${esc(x.nl||'9 holes')}</span>`:''}<span class="mut" style="display:block">${esc(hDateLong(x.date).replace(/,/g,''))} · CH ${x.ch}${x.full?'':' · thru '+x.th}</span><span class="hw">${x.pts} pts · gross ${x.g} (${hRel(x.to)}) · nett ${x.net}</span></span><span class="hc">›</span></button>`).join('')}</div>`}
+ <div class="card"><h2>Rounds (newest first)</h2>${r.rounds.slice().reverse().map(x=>`<button class="hrow" data-id="${esc(x.id)}" onclick="hOpen(this.dataset.id)"><span class="hm"><b>${esc(x.course)}</b> ${x.holes===9?`<span class="tag">${esc(x.nl||'9 holes')}</span>`:''}${x.solo?'<span class="tag">Solo</span>':''}<span class="mut" style="display:block">${esc(hDateLong(x.date).replace(/,/g,''))} · CH ${x.ch}${x.full?'':' · thru '+x.th}</span><span class="hw">${x.pts} pts · gross ${x.g} (${hRel(x.to)}) · nett ${x.net}</span></span><span class="hc">›</span></button>`).join('')}</div>`}
 // ---- actions ----
 window.hDelete=()=>{const s=hById(HV.id);if(!s)return;if(!confirm('Delete this saved round ('+s.course.name+', '+s.date+')? This can’t be undone.'))return;
  const before=H;if(!hCommit(H.filter(x=>x.id!==s.id)))return;if(S.histId===s.id){S.histId=null;S.noAuto=true;save()}HV.v='list';renderHistory();histBars();scrollTo(0,0);
@@ -1104,7 +1110,7 @@ window.hDup=()=>{const s=hById(HV.id);if(!s)return;
  const c=JSON.parse(JSON.stringify(s.course));S.course=c;S.holes=s.holes;if(s.holes===9&&c.par.length>=18)S.nine=s.nl==='Back 9'?'back':'front';
  const names=s.groups.flat();S.groups=s.groups.map(g=>g.slice());S.players=names.filter(n=>!inR(n));T=R.filter(r=>names.some(n=>lc(n)===lc(r.n))).map(r=>r.n);rStore();
  S.scores={};S.hcp=Object.assign({},s.hcp);S.hi=Object.assign({},s.hi);S.ptee=Object.assign({},s.ptee);S.tf=Object.assign({},s.tf);S.notes={};S.sig={};S.carry=s.carry;S.twoPot=0;S.lbm=s.lbm;S.comp=s.comp;S.tstart=s.tstart;S.tint=s.tint;S.date=hLocalISO();
- S.cg=0;S.ch=0;S.started=S.finished=false;S.histId=S.noAuto=null;S.size=S.size||'auto';save();HV.v='list';setTab('score');toast('New round ready – same course & players. Good luck!',2800)};
+ S.solo=!!s.solo;S.cg=0;S.ch=0;S.started=S.finished=false;S.histId=S.noAuto=null;S.size=S.size||'auto';save();HV.v='list';setTab('score');toast('New round ready – same course & players. Good luck!',2800)};
 window.hShare=async()=>{const s=hById(HV.id);if(!s)return;const url=hURL(baseURL(),s),txt=`⛳ ${s.course.name}${s.holes===9?' ('+(s.nl||'9 holes')+')':''} – ${hDateLong(s.date)}\n${hSummary(s)}\n\nOpen to see the full scorecard:`;
  const r=await shareOrCopy({title:'TeeDraw round – '+s.course.name,text:txt,url});if(r!=='cancel')track&&track('history_shared',{via:r})};
 window.hSaveShared=()=>{const s=HV.sh;if(!s)return;const r=hMerge(H,[s]);if(r.capped){toast('History is full ('+HIST_MAX+' rounds) – delete some first',3800);return}
@@ -1221,7 +1227,7 @@ function handleRoute(){const r=shareRoute(location.hash);if(!r)return;history.re
  if(r.t==='round'){openRound(r.id,r.k)}}
 addEventListener('hashchange',()=>{if(shareRoute(location.hash))handleRoute()});
 // -- suggest a feature (queued offline, sent through te_submit_suggestion; needs supabase-share.sql) --
-const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v14',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
+const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v15',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
 const sugGet=()=>jget(SUGQ,[]).filter(x=>x&&x.text&&Date.now()-(x.t||0)<30*864e5);
 const sugSet=a=>jset(SUGQ,a);
 function devId(){let d=localStorage.getItem(SUGD);if(!d){d=rid(16);localStorage.setItem(SUGD,d)}return d}
@@ -1248,6 +1254,54 @@ window.sugSend=async()=>{const text=($('sg-text').value||'').replace(/\s+/g,' ')
  mdl(`<h2>Thank you! 🙌</h2><div style="margin:8px 0">${msg}</div><div class="btns"><button onclick="mdlClose()">Done</button></div>`)};
 window.TDSUG={q:sugGet,flush:sugFlush};
 addEventListener('online',()=>{sugFlush()});setTimeout(()=>{if(sugGet().length)sugFlush()},3500);
+// ---------- solo round (one player, no draw, no teams) ----------
+let SF=null;
+const soloHTML=()=>{const F=SF,cs=S.courses,c=cs[F.ci]||S.course,n18=c.par.length>=18,rn=R.slice().sort((a,b)=>a.n.localeCompare(b.n)).slice(0,30);
+ return `<h2 style="margin:0 0 4px">🏌️ Play solo</h2><div class="mut">Just you and the card – no draw, no teams.</div>
+ <label for="so-n">Player</label><input id="so-n" list="so-dl" value="${esc(F.n)}" placeholder="Your name" autocomplete="off" oninput="soloName(this.value,1)"><datalist id="so-dl">${rn.map(r=>`<option value="${esc(r.n)}">`).join('')}</datalist>
+ ${rn.length?`<div class="rchips">${rn.slice(0,12).map(r=>`<button type="button" class="${lc(r.n)===lc(F.n)?'on':''}" data-n="${esc(r.n)}" onclick="soloName(this.dataset.n)">${esc(r.n)}</button>`).join('')}</div>`:''}
+ <label for="so-hi">Handicap index <span class="mut">(optional)</span></label><input id="so-hi" inputmode="decimal" value="${esc(F.hi)}" placeholder="e.g. 14.2" oninput="soloSet('hi',this.value)">
+ <label for="so-c">Course</label><select id="so-c" onchange="soloSet('ci',+this.value,1)">${cs.map((x,i)=>`<option value="${i}" ${i===F.ci?'selected':''}>${esc(x.name)}${x.par.length===9?' (9)':''}</option>`).join('')}</select>
+ <div class="btns" style="margin-top:8px"><button type="button" class="sec sm" id="so-near" onclick="soloNear()">📍 Nearest</button><button type="button" class="sec sm" onclick="soloCam()">📷 New from photo</button></div>${F.msg?`<div class="mut" id="so-msg" style="margin-top:4px">${esc(F.msg)}</div>`:''}
+ <label>Holes</label><div class="seg" id="so-h">${(n18?[['18','18'],['f','Front 9'],['b','Back 9']]:[['9','9 holes']]).map(([v,l])=>`<button type="button" class="${(n18?F.h:'9')===v?'on':''}" onclick="soloSet('h','${v}',1)">${l}</button>`).join('')}</div>
+ <label for="so-t">Tee time <span class="mut">(optional)</span></label><input id="so-t" type="time" value="${esc(F.t)}" oninput="soloSet('t',this.value)">
+ <div class="btns" style="margin-top:14px"><button class="go" id="so-go" onclick="soloStart()">Start round ›</button><button class="sec" onclick="soloReset();mdlClose()">Cancel</button></div>`};
+window.soloReset=()=>{SF=null};window.soloNew=()=>{SF=null;soloOpen(S.solo&&S.groups[0]?S.groups[0][0]:'')};window.soloSet=(k,v,re)=>{if(!SF)return;SF[k]=v;if(re){const h=document.getElementById('so-hi'),t=document.getElementById('so-t'),n=document.getElementById('so-n');if(n)SF.n=n.value;if(h)SF.hi=h.value;if(t)SF.t=t.value;soloOpen()}};
+window.soloOpen=name=>{if(!SF){const r0=name?R.find(r=>lc(r.n)===lc(name)):null;let ci=S.courses.findIndex(c=>c.name===S.course.name);if(ci<0)ci=0;
+  SF={n:name||'',hi:r0&&r0.hi!=null&&r0.hi!==''?String(r0.hi):'',ci,h:S.holes===9?(S.nine==='back'?'b':'f'):'18',t:''}}
+ const a=document.activeElement&&document.activeElement.id;mdl(soloHTML());if(a&&$(a)&&a!=='so-go'){const e=$(a);e.focus();if(e.setSelectionRange&&e.type==='text')try{e.setSelectionRange(e.value.length,e.value.length)}catch(x){}}};
+window.soloName=(v,typing)=>{SF.n=v;const r=R.find(r=>lc(r.n)===lc(v.trim()));if(r&&r.hi!=null&&r.hi!=='')SF.hi=String(r.hi);if(!typing){soloOpen();return}if(r&&$('so-hi'))$('so-hi').value=SF.hi;document.querySelectorAll('#mdl .rchips button').forEach(b=>b.classList.toggle('on',lc(b.dataset.n)===lc(v.trim())))};
+window.soloNear=async()=>{const b=$('so-near');if(b){b.disabled=true;b.textContent='Locating…'}
+ try{const p=await geoOnce(true),r=nearestCourse(p.lat,p.lng,S.courses,15);if(!SF)return;if(r){SF.ci=r.i;SF.msg=`Nearest: ${r.c.name} (${r.km<1?'<1':Math.round(r.km)} km)`}else SF.msg='No saved course within 15 km – pick one or add it from a photo.'}
+ catch(e){if(!SF)return;SF.msg=e&&e.code===1?'Location is blocked – pick the course from the list.':'Couldn’t get your location – pick the course from the list.'}
+ soloOpen()};
+window.soloCam=()=>{SF.cam=1;mdlClose();$('camIn').click()};
+{const cs0=window.camSave;window.camSave=async()=>{await cs0();if(SF&&SF.cam&&!CF){SF.cam=0;const i=S.courses.findIndex(c=>c.name===S.course.name);if(i>=0)SF.ci=i;SF.msg='Using '+S.course.name;setTab('players');soloOpen()}}}
+window.soloStart=()=>{const n=($('so-n').value||'').trim().replace(/\s+/g,' ').slice(0,40);SF.n=n;SF.hi=$('so-hi').value.trim();SF.t=$('so-t').value;
+ if(!n){toast('Enter the player’s name');$('so-n').focus();return}
+ const hv=SF.hi===''?'':parseHI(SF.hi),hr=parseFloat(String(SF.hi).replace(',','.').replace(/^\+/,'-'));if(SF.hi!==''&&(hv===''||isNaN(hr)||hr<-10||hr>54)){toast('Handicap index should be between -10 and 54');$('so-hi').focus();return}
+ if(S.ev){if(!confirm('This leaves the live event on this phone. Continue?'))return;S.ev=null;S.evLS={}}
+ if(hasScores()&&!S.histId){if(!confirm('Start a solo round? The current scorecard is kept in History.'))return}
+ if(hasScores())saveRound(false,true);
+ const c=S.courses[SF.ci]||S.course;S.course=JSON.parse(JSON.stringify(c));
+ if(c.par.length>=18){S.holes=SF.h==='18'?18:9;S.nine=SF.h==='b'?'back':'front'}else S.holes=9;
+ S.solo=true;S.groups=[[n]];if(!S.players.some(p=>lc(p)===lc(n)))S.players.push(n);
+ S.hi={};S.hcp={};S.ptee={};if(hv!==''){S.hi[n]=hv;S.hcp[n]=S.whs?chFrom(hv,ptee(n)):Math.max(0,Math.round(hv))}else S.hcp[n]=0;
+ const r=R.find(r=>lc(r.n)===lc(n));if(r&&hv!==''&&r.hi!==hv){r.hi=hv;try{localStorage.setItem('teedraw.roster',JSON.stringify(R))}catch(e){}}
+ const d=new Date();S.tstart=SF.t||String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+ S.scores={};S.tf=[{f:'best2',k:2}];S.notes={};S.sig={};S.histId=S.noAuto=null;S.started=S.finished=false;S.cg=0;S.ch=0;S.lbm='pts';S.date=hLocalISO();
+ if(location.hash)history.replaceState(null,'',location.pathname+location.search);
+ SF=null;mdlClose();track('solo_start',{holes:S.holes});save();setTab('score');toast('Solo round on '+S.course.name+' – good luck!')};
+window.soloCard=()=>{const el=$('solocard');if(!el)return;const on=S.solo&&S.groups.length,nm=on?esc(S.groups[0][0]):'';
+ el.innerHTML=`<div class="row" style="align-items:center;gap:10px"><div style="flex:1;min-width:0"><b style="font-size:16px">🏌️ Play solo</b><div class="mut" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${on?`In progress: ${nm} · ${esc(S.course.name)}`:'Score a round on your own'}</div></div>${on?`<button class="go sm" onclick="setTab('score')">Continue ›</button><button class="sec sm" onclick="soloNew()" aria-label="New solo round">New</button>`:`<button class="go" id="solobtn" onclick="soloReset();soloOpen()">Play solo ›</button>`}</div>`};
+window.soloSum=()=>{const el=$('solosum');if(!el)return;if($('gcardh'))$('gcardh').textContent=S.solo?'Your card':'Group card';if(!S.solo||!S.groups.length){el.classList.add('hidden');return}
+ const p=S.groups[0][0],n=S.holes,o=soloSplit(S.scores[p],cpar(),csi(),S.hcp[p]||0,n),rl=x=>x.th?(x.g-x.pp===0?'E':(x.g-x.pp>0?'+':'')+(x.g-x.pp)):'–',v=(x,k)=>x.th?x[k]:'–';
+ const cols=n===18?[['Out',o.out],['In',o.inn],['Total',o.tot]]:[[nineName()||'9 holes',o.tot]];
+ el.classList.remove('hidden');el.innerHTML=`<table class="lb"><tr><th></th>${cols.map(([l])=>`<th>${l}</th>`).join('')}</tr><tr><td>Gross</td>${cols.map(([,x])=>`<td>${v(x,'g')}${x.th?` <span class="mut">(${rl(x)})</span>`:''}</td>`).join('')}</tr><tr><td>Nett</td>${cols.map(([,x])=>`<td>${v(x,'net')}</td>`).join('')}</tr><tr><td>Points</td>${cols.map(([,x],i)=>`<td class="${i===cols.length-1?'big':''}">${v(x,'pts')}</td>`).join('')}</tr></table><div class="mut" style="margin-top:4px">${o.tot.th} of ${n} holes · CH ${S.hcp[p]||0}</div>`};
+{const rp=renderPlayers;renderPlayers=function(){rp.apply(this,arguments);soloCard()};window.renderPlayers=renderPlayers}
+{const re=renderEvent;renderEvent=function(){if(S.solo&&!JOIN&&!S.ev){$('evb').innerHTML=`<div class="card"><h2>Live sharing</h2><div class="mut">Live events and shared leaderboards are for group rounds. Your solo round is saved in History – open it there to share a link to the card.</div><div class="btns"><button class="sec" onclick="setTab('history')">Open History</button></div></div>`;return}return re.apply(this,arguments)};window.renderEvent=renderEvent}
+soloCard();soloSum();
+
 window.SHARE_READY=1;handleRoute();setTimeout(clubAuto,2500);renderClubs();rLinkInfo();
 
 }
