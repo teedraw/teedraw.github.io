@@ -11,6 +11,7 @@
 <style>
 :root{--g:#14532d;--g2:#166534;--g3:#22c55e;--bg:#f1f5ee;--card:#fff;--ink:#1a2e1f;--mut:#64748b;--red:#b91c1c;--r:14px}
 *{box-sizing:border-box}html,body{margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+#grpbar{background:var(--g2);color:#fff;padding:6px 16px;display:flex;align-items:center;gap:8px}#grpbar .gchip{background:#fff3;color:#fff;border:0;border-radius:99px;padding:4px 12px;font-weight:700;font-size:14px}#grpbar .gsub{font-size:12px;opacity:.85}.gact{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#dcfce7;border:1px solid #16a34a;border-radius:12px;padding:10px 12px;margin:0 0 10px}
 header{background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px}
 header h1{font-size:20px;margin:0;letter-spacing:.3px}header .sug{margin-left:auto;font-size:16px;background:#fff3;color:#fff;padding:2px 9px;border-radius:99px;border:0;line-height:1.4}header .sug+.pro{margin-left:8px}header .pro{margin-left:auto;font-size:11px;background:#facc15;color:#422006;padding:3px 8px;border-radius:99px;font-weight:700;border:0}
 main{max-width:640px;margin:0 auto;padding:12px}
@@ -102,8 +103,10 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
 .hro td.cell{cursor:default}.solo{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #22c55e;padding:10px 12px}.solo button{flex:0 0 auto;width:auto}.solosum{margin-top:10px}.solosum table{font-size:14px}.solosum td,.solosum th{padding:5px 4px}.solosum .big{font-size:18px;font-weight:800;color:var(--g)}.rchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.rchips button{background:#e3efe0;color:var(--g);padding:6px 12px;border-radius:99px;font-size:14px}.rchips button.on{background:var(--g2);color:#fff}input[type=search]{width:100%}
 </style></head><body>
 <header><svg id="logo" onclick="logoTap()" style="cursor:pointer" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 21V3l10 4-10 4"/><ellipse cx="10" cy="21" rx="7" ry="1.5"/></svg><h1>TeeDraw</h1><button class="sug" onclick="sugOpen()" aria-label="Suggest a feature" title="Suggest a feature">💡</button><button class="hsv" onclick="saveRound()" aria-label="Save round to History">💾 Save</button><button class="pro" onclick="proInfo()">PRO soon</button></header>
+<div id="grpbar"></div>
 <div id="inst" class="hidden"></div>
 <main>
+<div id="grpact"></div>
 <div class="card hidden" id="nearby"></div>
 <!-- PLAYERS -->
 <section id="v-players">
@@ -145,6 +148,7 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
   <div class="row"><div><label>First tee time</label><input type="time" id="tstart"></div><div><label>Interval (min)</label><input type="number" id="tint" min="0" max="30" inputmode="numeric"></div></div>
   <div class="btns"><button onclick="randomise()">🎲 Randomise</button></div></div>
  <div id="groups"></div>
+ <button id="gstart" class="wide hidden" style="margin-bottom:10px" onclick="gStart()">▶ Start round</button>
  <div id="drawact" class="btns hidden" style="margin-bottom:12px"><button class="sec" onclick="randomise()">🔀 Reshuffle</button><button class="wa" onclick="shareDraw()">Share to WhatsApp</button><button class="sec" onclick="copyLink()">🔗 Copy link</button></div>
  <div class="ad" data-slot="banner-draw">Ad / sponsor banner placeholder</div>
 </section>
@@ -246,10 +250,12 @@ function groupSizes(n,pref){ // returns array of group sizes
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function makeGroups(players,pref){const s=shuffle(players),sz=groupSizes(s.length,pref),g=[];let i=0;for(const k of sz){g.push(s.slice(i,i+k));i+=k}return g}
 function addMin(t,m){let[h,mm]=t.split(':').map(Number);let x=h*60+mm+m;x=((x%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')}
-function strokesOn(hcp,si,holes,nineSi){ // handicap strokes received on hole with stroke index si
-  // 9 holes: playing handicap is halved (rounded) and the hole's SI is ranked WITHIN the nine being played (1-9).
-  // nineSi = the SIs of the nine holes played (front or back). Without it (legacy callers) rank = ceil(si/2), which gives the same answer on the usual odd/even-split cards.
-  hcp=Math.round(+hcp||0);if(holes===9){hcp=Math.round(hcp/2);si=nineSi&&nineSi.length?1+nineSi.filter(x=>x<si).length:Math.ceil(si/2)} const n=holes;
+function strokesOn(hcp,si,holes,nineSi){ // handicap strokes received on hole with stroke index si (hcp = the player's 18-hole course handicap)
+  // 9 holes of an 18-hole card (nineSi = SIs of the nine played, from the 18-hole card): the FULL 18-hole handicap is spread over all 18 holes by SI
+  // and only the strokes that fall on the chosen nine count (hcp 10 on the front nine = a stroke on each front-nine hole with SI<=10).
+  // Legacy fallback (nine SIs numbered 1-9 or no nineSi): handicap halved and SI ranked within the nine.
+  hcp=Math.round(+hcp||0);if(holes===9&&nineSi&&nineSi.length&&Math.max(...nineSi)>9){if(hcp<=0)return 0;return Math.floor(hcp/18)+((si<=hcp%18)?1:0)}
+  if(holes===9){hcp=Math.round(hcp/2);si=nineSi&&nineSi.length?1+nineSi.filter(x=>x<si).length:Math.ceil(si/2)} const n=holes;
   if(hcp<=0)return 0; return Math.floor(hcp/n)+((si<=hcp%n)?1:0);}
 function stbl(score,par,shots){return score?Math.max(0,2+par+shots-score):0}
 function teamHole(pts,f,k,size){const v=pts.filter(x=>x!=null).sort((a,b)=>b-a);if(!v.length)return null;
@@ -520,7 +526,7 @@ function setHoles(v){if(locked())return noEdit();const ns=nineSel(),h=v==='f'||v
  save();renderDraw()}
 function renderDraw(){
  const ns=nineSel();seg('seg-holes',ns?[[18,'18 holes'],['f','Front 9'],['b','Back 9']]:[[18,'18 holes'],[9,'9 holes']],S.holes===18?18:ns?(isBack()?'b':'f'):9,setHoles);
- $('nine-hint').textContent=S.holes!==9?'':ns?(isBack()?'Back 9 = holes 10–18 of ':'Front 9 = holes 1–9 of ')+S.course.name+'. Handicap is halved and stroke index is ranked within the nine.':'9-hole card: holes 1–9.';
+ $('nine-hint').textContent=S.holes!==9?'':ns?(isBack()?'Back 9 = holes 10–18 of ':'Front 9 = holes 1–9 of ')+S.course.name+'. Enter the normal 18-hole handicap: strokes fall only on this nine’s holes, by their 18-hole stroke index.':'9-hole card: holes 1–9.';
  seg('seg-size',[['auto','Auto'],[4,'4-ball'],[3,'3-ball'],[2,'2-ball']],S.size,v=>{if(locked())return noEdit();S.size=v;save();renderDraw()});
  $('tstart').value=S.tstart;$('tint').value=S.tint;
  $('groups').innerHTML=S.solo&&S.groups.length?`<div class="card grp"><h3><span>🏌️ Solo round</span><span>⛳ ${esc(S.tstart)}</span></h3><div>${esc(S.groups[0][0])} · ${esc(S.course.name)}${nameTag()}</div><div class="mut" style="margin-top:6px">No draw needed. To play with others, tick 2+ players and tap Randomise (that replaces the solo scorecard).</div></div>`:S.groups.map((g,i)=>`<div class="card grp"><h3><span>Group ${i+1}</span><span>⛳ ${addMin(S.tstart,i*S.tint)}</span></h3><ol>${g.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`).join('');
@@ -618,7 +624,7 @@ function renderCard(){
  $('ctime').textContent=addMin(S.tstart,S.cg*S.tint);
  // header: Player | Tee colour | HI | CH ; A,B players then MARKER C,D(+)
  const prow=(p,i)=>{const t=ptee(p);return `<tr><td class="lt">${LET[i]}</td><td class="nmc">${esc(p)}</td><td class="tee" style="background:${t.color}" onclick="cycTee(${i})">${t.color==='#fff'?esc(t.name):''}</td><td><input inputmode="decimal" value="${(S.hi||{})[p]??''}" placeholder="–" onchange="setHI(${i},this.value)"></td><td class="chc"><input inputmode="numeric" aria-label="Course handicap for ${esc(p)}" value="${S.hcp[p]||0}" onfocus="this.select()" onchange="setCH(${i},this.value)"></td></tr>`};
- $('mh').innerHTML=`<tr><th></th><th>PLAYER</th><th>TEE COLOUR</th><th>HI <small>(info)</small></th><th>CH ✎</th></tr>`+`<tr><td colspan="5" class="chhint">✎ Tap CH: enter your playing handicap for this course (used for shots &amp; points).</td></tr>`+g.slice(0,2).map(prow).join('')+(g.length>2?`<tr><th></th><th colspan="4" style="text-align:left">MARKER</th></tr>`+g.slice(2).map((p,i)=>prow(p,i+2)).join(''):'');
+ $('mh').innerHTML=`<tr><th></th><th>PLAYER</th><th>TEE COLOUR</th><th>HI <small>(info)</small></th><th>CH ✎ <small>(18-hole)</small></th></tr>`+`<tr><td colspan="5" class="chhint">✎ Tap CH: enter your normal 18-hole playing handicap for this course (used for shots &amp; points).${n===9?' '+g.map(p=>esc(p.split(' ')[0])+': strokes on these 9 holes: '+csi().reduce((t,x)=>t+strokesOn(S.hcp[p],x,9,csi()),0)).join(' · '):''}</td></tr>`+g.slice(0,2).map(prow).join('')+(g.length>2?`<tr><th></th><th colspan="4" style="text-align:left">MARKER</th></tr>`+g.slice(2).map((p,i)=>prow(p,i+2)).join(''):'');
  const nine=n===18,cols=[];hs.forEach(h=>{cols.push(h);if(h===8&&nine)cols.push('out')});if(nine)cols.push('in');
  const rng=c=>c==='out'?[0,9]:c==='in'?[9,18]:[0,n],sum=(a,f,t)=>a.slice(f,t).reduce((x,y)=>x+(+y||0),0);
  const y=c=>typeof c==='number'&&par[c]===3?' y':'';
@@ -1049,7 +1055,7 @@ function hLBHTML(s,m){const c=hCompute(s),nm=n=>`<a class="pn" data-n="${esc(n)}
 function hCardHTML(s,gi){const c=hCompute(s),n=s.holes,hs=[...Array(n).keys()],par=s.par,si=s.si,LO=s.lo,AO=s.ao,g=s.groups[gi],o=s.tf[gi]||{f:'best2',k:2},P=c.grids[gi],
   T=s.course.tees.length?s.course.tees:[{name:s.course.tee||'Tee',color:'#fff',m:[]}],ptee=p=>T[Math.min(s.ptee[p]||0,T.length-1)];
  const prow=(p,i)=>{const t=ptee(p);return `<tr><td class="lt">${LET[i]}</td><td class="nmc">${esc(p)}</td><td class="tee" style="background:${t.color}">${t.color==='#fff'?esc(t.name):''}</td><td>${s.hi[p]??'–'}</td><td class="chc"><b>${s.hcp[p]||0}</b></td></tr>`};
- const mh=`<tr><th></th><th>PLAYER</th><th>TEE COLOUR</th><th>HI <small>(info)</small></th><th>CH</th></tr>`+g.slice(0,2).map(prow).join('')+(g.length>2?`<tr><th></th><th colspan="4" style="text-align:left">MARKER</th></tr>`+g.slice(2).map((p,i)=>prow(p,i+2)).join(''):'');
+ const mh=`<tr><th></th><th>PLAYER</th><th>TEE COLOUR</th><th>HI <small>(info)</small></th><th>CH <small>(18-hole)</small></th></tr>`+(n===9?`<tr><td colspan="5" class="chhint">${g.map(p=>esc(p.split(' ')[0])+': strokes on these 9 holes: '+si.reduce((t,x)=>t+strokesOn(s.hcp[p],x,9,si),0)).join(' · ')}</td></tr>`:'')+g.slice(0,2).map(prow).join('')+(g.length>2?`<tr><th></th><th colspan="4" style="text-align:left">MARKER</th></tr>`+g.slice(2).map((p,i)=>prow(p,i+2)).join(''):'');
  const nine=n===18,cols=[];hs.forEach(h=>{cols.push(h);if(h===8&&nine)cols.push('out')});if(nine)cols.push('in');
  const rng=k=>k==='out'?[0,9]:k==='in'?[9,18]:[0,n],sum=(a,f,t)=>a.slice(f,t).reduce((x,y)=>x+(+y||0),0),y=k=>typeof k==='number'&&par[k]===3?' y':'';
  const row=(lab,fn,sm,ex,cl='')=>`<tr class="${cl}"><th class="lab">${lab}</th>${cols.map(k=>typeof k==='number'?fn(k,y(k)):`<td class="sum">${sm?sm(k):''}</td>`).join('')}<td class="sum">${sm?sm('tot'):''}</td>${ex||'<td class="sum g"></td><td class="sum g"></td>'}</tr>`;
@@ -1227,7 +1233,7 @@ function handleRoute(){const r=shareRoute(location.hash);if(!r)return;history.re
  if(r.t==='round'){openRound(r.id,r.k)}}
 addEventListener('hashchange',()=>{if(shareRoute(location.hash))handleRoute()});
 // -- suggest a feature (queued offline, sent through te_submit_suggestion; needs supabase-share.sql) --
-const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v15',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
+const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v16',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
 const sugGet=()=>jget(SUGQ,[]).filter(x=>x&&x.text&&Date.now()-(x.t||0)<30*864e5);
 const sugSet=a=>jset(SUGQ,a);
 function devId(){let d=localStorage.getItem(SUGD);if(!d){d=rid(16);localStorage.setItem(SUGD,d)}return d}
@@ -1260,7 +1266,7 @@ const soloHTML=()=>{const F=SF,cs=S.courses,c=cs[F.ci]||S.course,n18=c.par.lengt
  return `<h2 style="margin:0 0 4px">🏌️ Play solo</h2><div class="mut">Just you and the card – no draw, no teams.</div>
  <label for="so-n">Player</label><input id="so-n" list="so-dl" value="${esc(F.n)}" placeholder="Your name" autocomplete="off" oninput="soloName(this.value,1)"><datalist id="so-dl">${rn.map(r=>`<option value="${esc(r.n)}">`).join('')}</datalist>
  ${rn.length?`<div class="rchips">${rn.slice(0,12).map(r=>`<button type="button" class="${lc(r.n)===lc(F.n)?'on':''}" data-n="${esc(r.n)}" onclick="soloName(this.dataset.n)">${esc(r.n)}</button>`).join('')}</div>`:''}
- <label for="so-hi">Handicap index <span class="mut">(optional)</span></label><input id="so-hi" inputmode="decimal" value="${esc(F.hi)}" placeholder="e.g. 14.2" oninput="soloSet('hi',this.value)">
+ <label for="so-hi">Handicap index (18-hole) <span class="mut">(optional – on 9 holes you only get the strokes that fall on those holes)</span></label><input id="so-hi" inputmode="decimal" value="${esc(F.hi)}" placeholder="e.g. 14.2" oninput="soloSet('hi',this.value)">
  <label for="so-c">Course</label><select id="so-c" onchange="soloSet('ci',+this.value,1)">${cs.map((x,i)=>`<option value="${i}" ${i===F.ci?'selected':''}>${esc(x.name)}${x.par.length===9?' (9)':''}</option>`).join('')}</select>
  <div class="btns" style="margin-top:8px"><button type="button" class="sec sm" id="so-near" onclick="soloNear()">📍 Nearest</button><button type="button" class="sec sm" onclick="soloCam()">📷 New from photo</button></div>${F.msg?`<div class="mut" id="so-msg" style="margin-top:4px">${esc(F.msg)}</div>`:''}
  <label>Holes</label><div class="seg" id="so-h">${(n18?[['18','18'],['f','Front 9'],['b','Back 9']]:[['9','9 holes']]).map(([v,l])=>`<button type="button" class="${(n18?F.h:'9')===v?'on':''}" onclick="soloSet('h','${v}',1)">${l}</button>`).join('')}</div>
@@ -1297,12 +1303,83 @@ window.soloCard=()=>{const el=$('solocard');if(!el)return;const on=S.solo&&S.gro
 window.soloSum=()=>{const el=$('solosum');if(!el)return;if($('gcardh'))$('gcardh').textContent=S.solo?'Your card':'Group card';if(!S.solo||!S.groups.length){el.classList.add('hidden');return}
  const p=S.groups[0][0],n=S.holes,o=soloSplit(S.scores[p],cpar(),csi(),S.hcp[p]||0,n),rl=x=>x.th?(x.g-x.pp===0?'E':(x.g-x.pp>0?'+':'')+(x.g-x.pp)):'–',v=(x,k)=>x.th?x[k]:'–';
  const cols=n===18?[['Out',o.out],['In',o.inn],['Total',o.tot]]:[[nineName()||'9 holes',o.tot]];
- el.classList.remove('hidden');el.innerHTML=`<table class="lb"><tr><th></th>${cols.map(([l])=>`<th>${l}</th>`).join('')}</tr><tr><td>Gross</td>${cols.map(([,x])=>`<td>${v(x,'g')}${x.th?` <span class="mut">(${rl(x)})</span>`:''}</td>`).join('')}</tr><tr><td>Nett</td>${cols.map(([,x])=>`<td>${v(x,'net')}</td>`).join('')}</tr><tr><td>Points</td>${cols.map(([,x],i)=>`<td class="${i===cols.length-1?'big':''}">${v(x,'pts')}</td>`).join('')}</tr></table><div class="mut" style="margin-top:4px">${o.tot.th} of ${n} holes · CH ${S.hcp[p]||0}</div>`};
+ el.classList.remove('hidden');el.innerHTML=`<table class="lb"><tr><th></th>${cols.map(([l])=>`<th>${l}</th>`).join('')}</tr><tr><td>Gross</td>${cols.map(([,x])=>`<td>${v(x,'g')}${x.th?` <span class="mut">(${rl(x)})</span>`:''}</td>`).join('')}</tr><tr><td>Nett</td>${cols.map(([,x])=>`<td>${v(x,'net')}</td>`).join('')}</tr><tr><td>Points</td>${cols.map(([,x],i)=>`<td class="${i===cols.length-1?'big':''}">${v(x,'pts')}</td>`).join('')}</tr></table><div class="mut" style="margin-top:4px">${o.tot.th} of ${n} holes · CH ${S.hcp[p]||0} (18-hole)${n===9?' · Strokes on these 9 holes: '+csi().reduce((t,x)=>t+strokesOn(S.hcp[p]||0,x,9,csi()),0):''}</div>`};
 {const rp=renderPlayers;renderPlayers=function(){rp.apply(this,arguments);soloCard()};window.renderPlayers=renderPlayers}
 {const re=renderEvent;renderEvent=function(){if(S.solo&&!JOIN&&!S.ev){$('evb').innerHTML=`<div class="card"><h2>Live sharing</h2><div class="mut">Live events and shared leaderboards are for group rounds. Your solo round is saved in History – open it there to share a link to the card.</div><div class="btns"><button class="sec" onclick="setTab('history')">Open History</button></div></div>`;return}return re.apply(this,arguments)};window.renderEvent=renderEvent}
 soloCard();soloSum();
 
 window.SHARE_READY=1;handleRoute();setTimeout(clubAuto,2500);renderClubs();rLinkInfo();
+
+// ===== Groups: one shared sign-in (group name + password) per golf group (needs supabase-groups.sql) =====
+(()=>{const GKEY='teedraw.groups',MEKEY='teedraw.roster.me';
+const gLoad=()=>{try{const g=JSON.parse(localStorage.getItem(GKEY)||'null');if(g&&Array.isArray(g.list))return g}catch(e){}return{cur:null,list:[],me:''}};
+let G=gLoad();const gSave=()=>{try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}};
+const gCur=()=>G.list.find(g=>g.id===G.cur)||null,gFind=id=>G.list.find(g=>g.id===id);
+const gErr=(e,what)=>e&&e.kind==='missing'?'Groups need a one-time setup on the server (supabase-groups.sql)':e&&e.kind==='net'?'No connection – try again when you have signal':e&&e.kind==='later'?'Too many tries – wait a minute':/taken/.test(e&&e.message||'')?'That group name is taken – pick another, or Join it':/bad password/.test(e&&e.message||'')?'Password needs 6+ characters':/bad name/.test(e&&e.message||'')?'Group name needs 2–40 characters':'Could not '+(what||'do that')+' – '+((e&&e.message)||'error');
+// the player list on screen (R) belongs to the current group; "My own list" is kept separately
+function showList(list){R.splice(0,R.length,...rosterClean(list).map(x=>({n:x.n,hi:x.hi})));_rStore()}
+function stash(){const g=gCur(),L=rosterClean(R);if(g)g.pl=L;else try{localStorage.setItem(MEKEY,JSON.stringify(L))}catch(e){}gSave()}
+function meList(){try{return JSON.parse(localStorage.getItem(MEKEY)||'null')}catch(e){return null}}
+const _rStore=rStore;let _pt=null,_busy=false,_dirty=false;
+rStore=function(){_rStore();const g=gCur();if(!g)return;g.pl=rosterClean(R);gSave();if(JSON.stringify(g.pl)!==JSON.stringify(g.sv||[])){_dirty=true;clearTimeout(_pt);_pt=setTimeout(gPush,1200)}};
+async function gPush(){const g=gCur();if(!g||_busy||!LIVE)return;_busy=true;clearTimeout(_pt);
+ try{for(let t=0;t<3;t++){const L=rosterClean(R);try{g.ver=await TDC.rpc('te_grp_set_list',{p_id:g.id,p_key:g.key,p_ver:g.ver||1,p_data:clubPack(L,null)});g.sv=L;g.pl=L;_dirty=false;gSave();renderGB();return}
+  catch(e){if(e.kind==='reject'&&/stale/.test(e.message||'')){const o=await TDC.rpc('te_grp_get',{p_id:g.id,p_key:g.key});if(!o){gGone(g);return}const u=clubUnpack(o.data)||{players:[]};const m=rosterMerge(R,u.players,'merge');showList(m.list);g.ver=o.ver;g.rounds=o.rounds||[];continue}
+   if(e.kind==='reject'&&/not allowed/.test(e.message||'')){gGone(g);return}throw e}}}
+ catch(e){if(e.kind!=='net')toast(gErr(e,'save the group list'),3000)}finally{_busy=false}}
+function gGone(g){toast('“'+g.name+'” signed you out (password changed or group removed). Sign in again.',4200);g.out=1;gSave();renderGB()}
+async function gPull(force){const g=gCur();if(!g||!LIVE||g.out||!navigator.onLine)return;if(_dirty&&!force){gPush();return}
+ let o;try{o=await TDC.rpc('te_grp_get',{p_id:g.id,p_key:g.key})}catch(e){return}if(gCur()!==g)return;if(!o){gGone(g);return}
+ g.name=o.name;g.rounds=o.rounds||[];g.t=Date.now();if(o.ver!==g.ver&&!_dirty){const u=clubUnpack(o.data)||{players:[]};g.ver=o.ver;g.sv=u.players;g.pl=u.players;showList(u.players);if(S.tab==='players')renderPlayers()}
+ gSave();renderGB()}
+function gAdd(o,me){let g=gFind(o.id);stash();if(!g){g={id:o.id};G.list.push(g)}const u=clubUnpack(o.data)||{players:[]};Object.assign(g,{name:o.name,key:o.key,ver:o.ver,pl:u.players,sv:u.players,rounds:o.rounds||[],t:Date.now(),out:0});
+ if(me)G.me=me;G.cur=g.id;gSave();showList(g.pl);renderPlayers();renderGB();gTimer()}
+window.gSwitch=id=>{if(id===G.cur){mdlClose();return}if(_dirty)gPush();stash();G.cur=id||null;gSave();const g=gCur();
+ if(g){if(g.out){mdlClose();gForm('join',g.name);return}showList(g.pl||[])}else showList(meList()||[]);T=T.filter(inR);renderPlayers();renderGB();mdlClose();toast(g?'Now using '+g.name:'Now using my own list');gPull(true)};
+window.gSignOut=id=>{const g=gFind(id);if(!g||!confirm('Sign out of “'+g.name+'” on this phone? You can sign in again with the group password.'))return;if(G.cur===id){G.cur=null;showList(meList()||[])}G.list=G.list.filter(x=>x.id!==id);gSave();renderPlayers();renderGB();gMenu()};
+window.gMenu=()=>{const c=G.cur;mdl(`<h2>Your groups</h2><div class="mut">Each group has its own shared player list and live rounds. Tap one to switch.</div>
+ <div class="glist">${G.list.map(g=>`<div class="row" style="align-items:center;gap:6px;margin:6px 0"><button class="${g.id===c?'':'sec '}wide" style="flex:1;text-align:left" onclick="gSwitch('${g.id}')">${g.id===c?'✓ ':''}👥 ${esc(g.name)}<br><small>${(g.pl||[]).length} players${(g.rounds||[]).length?' · 🟢 '+g.rounds.length+' live round'+(g.rounds.length>1?'s':''):''}${g.out?' · signed out':''}</small></button><button class="sec sm" style="flex:0 0 auto;width:auto" aria-label="Sign out of ${esc(g.name)}" onclick="gSignOut('${g.id}')">Sign out</button></div>`).join('')}
+ <button class="${c?'sec ':''}wide" onclick="gSwitch(null)">${c?'':'✓ '}🙋 My own list (not shared)</button></div>
+ <div class="btns"><button onclick="gForm('join')">Join a group</button><button class="sec" onclick="gForm('new')">Create a group</button><button class="sec" onclick="mdlClose()">Close</button></div>`)};
+window.gForm=(k,nm)=>{mdl(`<h2>${k==='new'?'Create a group':'Sign in to your group'}</h2><div class="mut">${k==='new'?'Pick a name and a password and share both with your four-ball / society. Everyone signs in once and stays signed in. Your current player list becomes the group’s list.':'Use the group name and password your group shared. You stay signed in on this phone.'}</div>
+ <label>Group name</label><input id="g-name" maxlength="40" placeholder="e.g. Monzi Mondays" autocomplete="username" value="${esc(nm||'')}">
+ <label>Group password</label><input id="g-pw" type="password" maxlength="72" autocomplete="${k==='new'?'new-password':'current-password'}" placeholder="${k==='new'?'6+ characters':''}">
+ <label>Your name <small class="mut">(optional – shows who started a round)</small></label><input id="g-me" maxlength="40" value="${esc(G.me||'')}" autocomplete="name">
+ <div class="btns"><button id="g-go" onclick="gGo('${k}')">${k==='new'?'Create group':'Sign in'}</button><button class="sec" onclick="gForm('${k==='new'?'join':'new'}')">${k==='new'?'I already have one':'Create a new group'}</button><button class="sec" onclick="mdlClose()">Cancel</button></div><div id="g-msg" class="mut" role="alert"></div>`);
+ const f=$(nm?'g-pw':'g-name');f&&f.focus();$('g-pw').addEventListener('keydown',e=>{if(e.key==='Enter')gGo(k)});$('mdl').querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>{$('g-msg').textContent=''}))};
+window.gGo=async k=>{const name=shName($('g-name').value),pw=$('g-pw').value,me=shName($('g-me').value),msg=t=>{$('g-msg').textContent=t;$('g-msg').style.color='#b91c1c'};
+ if(name.length<2)return msg('Enter the group name');if(pw.length<6)return msg('Password needs 6+ characters');if(!LIVE)return msg('Live sharing isn’t set up in this copy');
+ const b=$('g-go');b.disabled=true;b.textContent='…';
+ try{let o;if(k==='new'){stash();o=await TDC.rpc('te_grp_create',{p_name:name,p_pw:pw,p_data:clubPack(R,null)});track('group_created',{n:R.length})}
+  else{o=await TDC.rpc('te_grp_login',{p_name:name,p_pw:pw});if(o&&o.err){b.disabled=false;b.textContent='Sign in';return msg(o.err==='locked'?'Too many wrong passwords – this group is locked for 10 minutes':'Wrong group name or password')}track('group_joined',{})}
+  if(!o||!o.id)throw Object.assign(new Error('no reply'),{kind:'net'});mdlClose();gAdd(o,me);toast((k==='new'?'Group created – ':'Signed in – ')+o.name,2600);if(k==='new')gShare()}
+ catch(e){b.disabled=false;b.textContent=k==='new'?'Create group':'Sign in';msg(gErr(e,k==='new'?'create the group':'sign in'))}};
+function gShare(){const g=gCur();if(!g)return;mdl(`<h2>Group created 🎉</h2><div class="mut">Tell your group to open TeeDraw, tap <b>👥 Sign in to a group</b> and enter:</div><div class="bigcode" style="font-size:20px">${esc(g.name)}</div><div class="mut">plus the password you chose. (TeeDraw never shows the password again.)</div><div class="btns"><button class="wa" onclick="wa('⛳ Join our TeeDraw group: open '+baseURL()+' → 👥 Sign in to a group → name: ${esc(g.name).replace(/'/g,'')} (password: ask me)')">Share to WhatsApp</button><button class="sec" onclick="mdlClose()">Done</button></div>`)}
+// header strip + active rounds
+function renderGB(){const el=$('grpbar');if(!el)return;const g=gCur();
+ el.innerHTML=g?`<button class="gchip" onclick="gMenu()" aria-label="Switch group">👥 ${esc(g.name)}${G.list.length>1?' ▾':''}</button><span class="gsub">${g.out?'signed out':(g.pl||[]).length+' players'}</span>`
+  :`<button class="gchip" onclick="${G.list.length?'gMenu()':"gForm('join')"}">👥 ${G.list.length?'My own list ▾':'Sign in to a group'}</button>`;
+ const a=$('grpact');if(!a)return;const rs=g&&!g.out?(g.rounds||[]):[];
+ a.innerHTML=rs.map(r=>{const mine=S.ev&&S.ev.id===r.i;return`<div class="gact"><div><b>🟢 Active round</b> · ${esc(r.n||'Round')}<br><small>${r.by?'started by '+esc(r.by)+' · ':''}${r.t?new Date(r.t*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}${mine?' · you’re in it':''}</small></div><div class="btns" style="margin:0">${mine?`<button class="sm" onclick="setTab('score')">Score</button>`:`<button class="sm" onclick="gOpen('${r.i}')">Open</button>`}<button class="sec sm" onclick="gEnd('${r.i}')">Finish</button></div></div>`}).join('');
+ const sb=$('gstart');if(sb){const show=g&&!g.out&&S.groups&&S.groups.length&&!(S.ev&&rs.some(r=>r.i===S.ev.id));sb.classList.toggle('hidden',!show);if(show)sb.textContent='▶ Start round for '+g.name}}
+window.gOpen=i=>{const g=gCur(),r=g&&(g.rounds||[]).find(x=>x.i===i);if(r){track('group_round_open',{});openRound(r.i,r.k)}};
+window.gEnd=async i=>{const g=gCur();if(!g||!confirm('Finish this round for everyone in '+g.name+'? It drops off the active list (scores stay saved).'))return;
+ try{g.rounds=await TDC.rpc('te_grp_round_end',{p_id:g.id,p_key:g.key,p_ev:i})||[];gSave();renderGB();toast('Round finished');if(S.ev&&S.ev.id===i&&window.saveRound&&hasScores())saveRound()}catch(e){toast(gErr(e,'finish the round'),3000)}};
+window.gStart=async()=>{const g=gCur();if(!g||!S.groups.length)return;if(S.ev&&!confirm('You are already in “'+S.ev.name+'”. Start a new round for '+g.name+' instead?'))return;
+ const b=$('gstart');b.disabled=true;b.textContent='Starting…';
+ try{S.ev=null;EF={name:(g.name+' · '+new Date().toLocaleDateString([],{day:'numeric',month:'short'})).slice(0,60),days:1,rank:'pts',c:[S.courses.findIndex(c=>c.name===S.course.name)],h:[S.holes],nn:[S.nine==='back'?'back':'front'],dt:[S.date]};
+  await evCreate();if(!S.ev||S.ev.role!=='org')throw Object.assign(new Error('create'),{kind:'net'});
+  if(!S.ev.sk)await ensureSK();if(!S.ev.sk)throw new Error('scorer key not available (run supabase-share.sql)');
+  g.rounds=await TDC.rpc('te_grp_round_add',{p_id:g.id,p_key:g.key,p_round:{i:S.ev.id,k:S.ev.sk,n:S.ev.name,by:G.me||''}})||[];gSave();track('group_round_start',{g:S.groups.length});
+  setTab('score');toast('Round started – everyone in '+g.name+' can open it now',3200)}
+ catch(e){toast(gErr(e,'start the round'),3600)}finally{b.disabled=false;renderGB()}};
+let _gt=null;function gTimer(){clearInterval(_gt);if(G.cur)_gt=setInterval(()=>{if(!document.hidden)gPull()},window.TDG_POLL||20000)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)gPull()});addEventListener('online',()=>gPull());
+const _rd=renderDraw;renderDraw=function(){_rd.apply(this,arguments);renderGB()};
+const _st=setTab;setTab=function(){_st.apply(this,arguments);renderGB()};window.setTab=setTab;
+const _rp=renderPlayers;renderPlayers=function(){_rp.apply(this,arguments);renderGB()};
+window.TDG={get G(){return G},pull:gPull,push:gPush,render:renderGB};
+renderGB();gTimer();if(G.cur)setTimeout(()=>gPull(),300)})();
 
 }
 </script><div id="mdl" class="mdl hidden" onclick="if(event.target===this)mdlClose()"></div></body></html>
