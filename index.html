@@ -83,7 +83,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 4px;t
 .cam .ph{position:sticky;top:calc(52px + env(safe-area-inset-top));z-index:2;background:#0f2e1a;text-align:center;height:26vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:zoom-in}.cam .ph.sm{height:44px}.cam .ph img{max-width:100%;min-height:0;flex:1;object-fit:contain}.ph-h{font-size:11px;color:#bbf7d0;padding:2px 0}
 .ce{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}.ce .hr{display:grid;grid-template-columns:22px 1fr 1fr;gap:4px;align-items:center;margin-bottom:4px}.ce .hr b{font-size:13px;text-align:center;color:var(--mut)}.ce input.cn{padding:8px 0;text-align:center;font-size:18px;font-weight:700;scroll-margin-top:150px;scroll-margin-bottom:260px}.ce input.cn.bad{border-color:var(--red);background:#fee2e2}
 .ctot{margin-top:6px;font-size:14px;text-align:center}.cerr{margin-top:4px;font-size:13px;color:#92400e;background:#fffbeb;border-radius:8px;padding:6px 8px}.cerr.ok{color:#166534;background:#f0fdf4}
-.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink);margin:10px 0 0}.chk input{width:22px;height:22px;flex:none;padding:0;margin:0}
+.mrow{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #e3efe0;flex-wrap:wrap}.mrow .mn{flex:1 1 110px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gch{display:flex;gap:4px;flex-wrap:wrap}.gch button{padding:7px 0;width:38px;font-size:14px;background:#e3efe0;color:var(--g)}.gch button.on{background:var(--g2);color:#fff}.mrow select{flex:1 1 100%;padding:7px;font-size:15px}.mrow.miss .mn{color:var(--red)}.mhd{font-size:13px;font-weight:700;color:var(--g);margin:10px 0 2px}.ptag{font-size:11px;background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;margin-left:6px}.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink);margin:10px 0 0}.chk input{width:22px;height:22px;flex:none;padding:0;margin:0}
 .lbx{position:fixed;inset:0;background:#000;z-index:40}.lbx .lbc{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}.lbx img{display:block;max-width:none;margin:0 auto}.lbx .lbb{position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:6px;z-index:2}.lbx .lbb button{background:#000a;border:1px solid #fff6;min-width:44px;padding:8px 12px}
 .tag{font-size:10px;background:#dbeafe;color:#1e40af;border-radius:99px;padding:1px 7px;font-weight:600;vertical-align:middle;margin-left:4px}.lk{background:none;color:#1d4ed8;padding:4px 8px 4px 0;font-size:13px;font-weight:500}#nearby{border:2px solid var(--g3)}
 .mdl{position:fixed;inset:0;background:#0007;z-index:60;display:flex;align-items:flex-end;justify-content:center}.mdl.hidden{display:none}
@@ -143,12 +143,15 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
 <section id="v-draw" class="hidden">
  <div class="card"><h2>Format</h2>
   <label>Holes</label><div class="seg" id="seg-holes"></div><div class="mut" id="nine-hint" style="margin-top:6px"></div>
-  <label>Group size</label><div class="seg" id="seg-size"></div>
+  <label>How to make the groups</label><div class="seg" id="seg-mode"></div>
+  <label>Group size</label><div class="seg" id="seg-size"></div><div class="mut" id="size-hint" style="margin-top:6px"></div>
+  <label class="chk" id="keepw"><input type="checkbox" id="keepp" onchange="setKeep(this.checked)"><span>Keep set partners together <span class="mut">(pick partners below; everyone else is drawn at random)</span></span></label>
+  <div id="manual"></div>
   <div class="row"><div><label>First tee time</label><input type="time" id="tstart"></div><div><label>Interval (min)</label><input type="number" id="tint" min="0" max="30" inputmode="numeric"></div></div>
-  <div class="btns"><button onclick="randomise()">🎲 Randomise</button></div></div>
+  <div class="btns"><button id="drawbtn" onclick="drawGo()">🎲 Random draw</button></div></div>
  <div id="groups"></div>
  <button id="gstart" class="wide hidden" style="margin-bottom:10px" onclick="gStart()">▶ Start round</button>
- <div id="drawact" class="btns hidden" style="margin-bottom:12px"><button class="sec" onclick="randomise()">🔀 Reshuffle</button><button class="wa" onclick="shareDraw()">Share to WhatsApp</button><button class="sec" onclick="copyLink()">🔗 Copy link</button></div>
+ <div id="drawact" class="btns hidden" style="margin-bottom:12px"><button class="sec" id="reshuf" onclick="drawGo()">🔀 Reshuffle</button><button class="wa" onclick="shareDraw()">Share to WhatsApp</button><button class="sec" onclick="copyLink()">🔗 Copy link</button></div>
  <div class="ad" data-slot="banner-draw">Ad / sponsor banner placeholder</div>
 </section>
 <!-- SCORE -->
@@ -179,7 +182,7 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
 <section id="v-card" class="hidden">
  <div class="hsave"></div>
  <div class="row" style="margin-bottom:8px"><select id="cgsel" onchange="S.cg=+this.value;save();renderCard()"></select><select id="ccsel" onchange="S.course=JSON.parse(JSON.stringify(S.courses[+this.value]));save();renderCard()"></select></div>
- <div class="card" id="tfcard" style="padding:10px"><div class="row"><div><label style="margin-top:0">Team format (this group)</label><select id="tfmt" onchange="setFmt(this.value)"><option value="best2">Best 2 scores count (B/B)</option><option value="best1">Best 1 (better ball)</option><option value="alliance">Alliance – pick scores</option><option value="avg">Average of the group</option></select></div><div id="kwrap" style="flex:0 0 90px"><label style="margin-top:0">Scores count</label><select id="tk" onchange="setFmt(null,+this.value)"><option>1</option><option>2</option><option>3</option></select></div></div><div class="mut" id="tnote" style="margin-top:6px"></div></div>
+ <div class="card" id="tfcard" style="padding:10px"><div class="row"><div><label style="margin-top:0">Team format (this group)</label><select id="tfmt" onchange="setFmt(this.value)"><option value="best2">Best 2 scores count (B/B)</option><option value="best1">Best 1 (better ball)</option><option value="alliance">Alliance – pick scores</option><option value="avg">Average of the group</option><option value="pairs">Partners: A+B v C+D (better ball each)</option></select></div><div id="kwrap" style="flex:0 0 90px"><label style="margin-top:0">Scores count</label><select id="tk" onchange="setFmt(null,+this.value)"><option>1</option><option>2</option><option>3</option></select></div></div><div class="mut" id="tnote" style="margin-top:6px"></div></div>
  <div class="mc">
   <table class="mh" id="mh"></table>
   <div class="mcomp"><div><b>COMPETITION:</b> <input id="ccomp" placeholder="e.g. Saturday Alliance" onchange="S.comp=this.value;save()"></div><div><b>Date:</b> <input type="date" id="cdate" onchange="S.date=this.value;save()"> <b>Tee Time</b> <span id="ctime"></span></div><div class="club" id="cclub"></div></div>
@@ -259,6 +262,29 @@ function strokesOn(hcp,si,holes,nineSi){ // handicap strokes received on hole wi
 function stbl(score,par,shots){return score?Math.max(0,2+par+shots-score):0}
 function teamHole(pts,f,k,size){const v=pts.filter(x=>x!=null).sort((a,b)=>b-a);if(!v.length)return null;
   if(f==='avg')return v.reduce((a,b)=>a+b,0)/(size||v.length);const c=f==='best1'?1:f==='best2'?2:Math.max(1,Math.min(3,k||2));return v.slice(0,c).reduce((a,b)=>a+b,0)}
+// ---- set partners / manual groups (v18). Partners always sit next to each other: slots A+B and C+D of a group.
+function pairOf(p,pairs){for(const x of pairs||[])if(x[0]===p)return x[1];else if(x[1]===p)return x[0];return null}
+function arrangeGroup(g,pairs){const out=[],seen=new Set();for(const p of g){if(seen.has(p))continue;const q=pairOf(p,pairs);out.push(p);seen.add(p);if(q!=null&&g.includes(q)&&!seen.has(q)){out.push(q);seen.add(q)}}
+ // put pairs first so a 3-ball with a pair reads A+B then C
+ const units=[];for(let i=0;i<out.length;i++){const q=pairOf(out[i],pairs);if(q!=null&&out[i+1]===q){units.push([out[i],q]);i++}else units.push([out[i]])}
+ return units.sort((a,b)=>b.length-a.length).flat()}
+function groupPairs(g,pairs){const r=[];for(let i=0;i+1<g.length;i+=2)if(pairOf(g[i],pairs)===g[i+1])r.push([g[i],g[i+1]]);return r}
+// random draw that keeps set partners in the same group. Returns {groups,split:[pairs that could not fit]}
+function makeGroupsKeep(players,pref,pairs){const set=new Set(players),pr=shuffle((pairs||[]).filter(x=>set.has(x[0])&&set.has(x[1])&&x[0]!==x[1])),inP=new Set(pr.flat()),
+  sz=shuffle(groupSizes(players.length,pref)),G=sz.map(()=>[]),free=i=>sz[i]-G[i].length,split=[];
+ for(const x of pr){let best=-1;for(let i=0;i<G.length;i++)if(free(i)>=2&&(best<0||free(i)>free(best)))best=i;if(best<0){split.push(x);continue}G[best].push(x[0],x[1])}
+ const rest=shuffle(players.filter(p=>!inP.has(p)).concat(split.flat()));for(const p of rest){let i=G.findIndex((_,j)=>free(j)>0);G[i].push(p)}
+ const out=G.map(g=>arrangeGroup(shuffle(g),pr.filter(x=>!split.includes(x)))).sort((a,b)=>a.length-b.length);return{groups:out,split}}
+// manual groups: man = {player: group index}. Returns {groups,err}
+function groupsFromMan(players,man,pairs){const b=[];const miss=[];for(const p of players){const i=man&&man[p];if(i==null||i<0||isNaN(i)){miss.push(p);continue}(b[i]=b[i]||[]).push(p)}
+ if(miss.length)return{err:'Put '+miss.slice(0,3).join(', ')+(miss.length>3?' +'+(miss.length-3):'')+' in a group first',miss};
+ const g=b.filter(x=>x&&x.length);if(!g.length)return{err:'No players in groups'};const big=g.findIndex(x=>x.length>4);if(big>=0)return{err:'Max 4 players per group'};
+ return{groups:g.map(x=>arrangeGroup(x,pairs))}}
+// team leaderboard rows. Format 'pairs' = each pair (A+B, C+D) is its own team, better ball of the two.
+function teamRows(groups,grids,tf){const out=[];groups.forEach((g,gi)=>{const o=(tf||{})[gi]||{f:'best2',k:2},P=grids[gi]||[],n=P[0]?P[0].length:0,hs=[...Array(n).keys()];
+  const mk=(ix,side)=>{const per=hs.map(h=>teamHole(ix.map(i=>P[i][h]),o.f==='pairs'?'best1':o.f,o.k,ix.length));out.push({gi,side,names:ix.map(i=>g[i]),o,per,tot:per.reduce((a,b)=>a+(b||0),0),thru:per.filter(v=>v!=null).length})};
+  if(o.f==='pairs'&&g.length>=3){mk([0,1],'A');mk(g.length>=4?[2,3]:[2],'B')}else mk(g.map((_,i)=>i),'')});return out}
+const teamName=r=>'Group '+(r.gi+1)+(r.side?' '+(r.side==='A'?'A+B':'C+D'):'');
 function skins(P,carry,off){off=off||0;const n=P.length?P[0].length:0,won=P.map(()=>0),log=[];let pot=0;
   for(let h=0;h<n;h++){const col=P.map(r=>r[h]);if(col.some(x=>x==null))continue;pot++;const mx=Math.max(...col),w=col.map((x,i)=>x===mx?i:-1).filter(i=>i>=0);
     if(w.length===1){won[w[0]]+=pot;log.push(`H${h+1+off}: ${String.fromCharCode(65+w[0])} wins ${pot}`);pot=0}else if(!carry)pot=0}
@@ -363,7 +389,7 @@ function hClean(r){try{
   hcp[n]=Math.round(hNum(own(hc,k),0,54,0));const h=shHi(own(hi0,k));if(h!=='')hi[n]=h;const t=Math.round(hNum(own(pt,k),0,9,0));if(t)ptee[n]=t;
   const a=own(sc0,k);scores[n]=Array.from({length:holes},(_,i)=>{const v=Array.isArray(a)?Math.round(+a[i]):0;return v>=1&&v<=30?v:null});
   const q=own(nt0,k);if(q&&typeof q==='object'){const o={units:Math.round(hNum(q.units,0,9999,0)),fines:hNum(q.fines,0,99999,0),skins:Math.round(hNum(q.skins,0,99,0)),text:hStr(q.text,200)};if(o.units||o.fines||o.skins||o.text)notes[n]=o}}
- const tf=hObj();for(const gi of groups.keys()){const o=src(r.tf)[gi];if(o&&typeof o==='object'){const f=['best2','best1','alliance','avg'].includes(o.f)?o.f:'best2';tf[gi]={f,k:Math.round(hNum(o.k,1,3,2))}}}
+ const tf=hObj();for(const gi of groups.keys()){const o=src(r.tf)[gi];if(o&&typeof o==='object'){const f=['best2','best1','alliance','avg','pairs'].includes(o.f)?o.f:'best2';tf[gi]={f,k:Math.round(hNum(o.k,1,3,2))}}}
  const u=hNum(r.u,0,4e12,0),t=hNum(r.t,0,4e12,u);
  const out={v:1,id,t,u:u||t,auto:!!r.auto,date:/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')?r.date:hIso(t),comp:hStr(r.comp,60),ev:hStr(r.ev,60),course,holes,nl:holes===9?(r.nl==='Back 9'||r.nl==='Front 9'?r.nl:'9 holes'):'',lo:holes===9&&+r.lo===9?9:0,ao:holes===9&&+r.ao===9&&cpL.length>=18?9:0,par,si,
   tstart:/^\d{2}:\d{2}$/.test(r.tstart||'')?r.tstart:'07:30',tint:Math.round(hNum(r.tint,0,30,8)),groups,hcp,hi,ptee,scores,tf,carry:r.carry!==false,notes,twoPot:hNum(r.twoPot,0,99999,0),lbm:['gross','net','pts','team'].includes(r.lbm)?r.lbm:'gross'};
@@ -373,17 +399,17 @@ function hClean(r){try{
 function hCompute(s){const n=s.holes,par=s.par,si=s.si,hs=[...Array(n).keys()],sh=(p,h)=>strokesOn(s.hcp[p]||0,si[h],n,n===9?si:undefined),rows=[],grids=[];
  s.groups.forEach((g,gi)=>{grids.push(g.map(p=>{const a=s.scores[p]||[];return hs.map(h=>a[h]?stbl(a[h],par[h],sh(p,h)):null)}));
   g.forEach((p,i)=>{const a=s.scores[p]||[];let G=0,pp=0,net=0,th=0,pts=0;hs.forEach(h=>{if(a[h]){G+=a[h];pp+=par[h];const so=sh(p,h);net+=a[h]-so;pts+=stbl(a[h],par[h],so);th++}});rows.push({p,gi,i,g:G,pp,net,th,pts,to:G-pp,nto:net-pp})})});
- const teams=s.groups.map((g,gi)=>{const o=s.tf[gi]||{f:'best2',k:2},per=hs.map(h=>teamHole(grids[gi].map(r=>r[h]),o.f,o.k,g.length));return{gi,o,per,tot:per.reduce((a,b)=>a+(b||0),0),thru:per.filter(v=>v!=null).length}});
+ const teams=teamRows(s.groups,grids,s.tf);
  const skinsBy=s.groups.map((g,gi)=>skins(grids[gi],s.carry!==false));
  return{rows,grids,teams,skinsBy,sh,complete:rows.length>0&&rows.every(r=>r.th===n)}}
 function hBoard(c,m){return c.rows.filter(r=>r.th).sort((a,b)=>(m==='pts'?b.pts-a.pts:m==='net'?a.nto-b.nto:a.to-b.to)||b.th-a.th)}
 function hTeamBoard(c){return c.teams.filter(r=>r.thru).sort((a,b)=>b.tot-a.tot||b.thru-a.thru)}
 function hRes(s){const c=hCompute(s),m=s.lbm;let win=null;
- if(m==='team'){const b=hTeamBoard(c);if(b.length){const top=b.filter(r=>r.tot===b[0].tot&&r.thru===b[0].thru),nm=top.map(r=>'Group '+(r.gi+1));win={names:nm,txt:nm.slice(0,2).join(' & ')+(nm.length>2?' +'+(nm.length-2):'')+' · '+hR1(b[0].tot)+' pts'}}}
+ if(m==='team'){const b=hTeamBoard(c);if(b.length){const top=b.filter(r=>r.tot===b[0].tot&&r.thru===b[0].thru),nm=top.map(teamName);win={names:nm,txt:nm.slice(0,2).join(' & ')+(nm.length>2?' +'+(nm.length-2):'')+' · '+hR1(b[0].tot)+' pts'}}}
  else{const b=hBoard(c,m);if(b.length){const key=r=>m==='pts'?r.pts:m==='net'?r.nto:r.to,top=b.filter(r=>key(r)===key(b[0])&&r.th===b[0].th),nm=top.map(r=>r.p),r0=b[0];
   win={names:nm,txt:nm.slice(0,2).join(' & ')+(nm.length>2?' +'+(nm.length-2):'')+' · '+(m==='pts'?r0.pts+' pts':m==='net'?'net '+r0.net+' ('+hRel(r0.nto)+')':r0.g+' ('+hRel(r0.to)+')')}}}
  const sk={};c.skinsBy.forEach((k,gi)=>s.groups[gi].forEach((p,i)=>{const v=k.won[i]+((s.notes[p]||{}).skins||0);if(v)sk[p]=v}));
- return{m,n:c.rows.length,done:c.complete,win,rows:c.rows.map(r=>({p:r.p,gi:r.gi,g:r.g,net:r.net,pts:r.pts,th:r.th,to:r.to,nto:r.nto})),teams:c.teams.filter(t=>t.thru).map(t=>({gi:t.gi,tot:hR1(t.tot),thru:t.thru})),sk}}
+ return{m,n:c.rows.length,done:c.complete,win,rows:c.rows.map(r=>({p:r.p,gi:r.gi,g:r.g,net:r.net,pts:r.pts,th:r.th,to:r.to,nto:r.nto})),teams:c.teams.filter(t=>t.thru).map(t=>({gi:t.gi,side:t.side||undefined,tot:hR1(t.tot),thru:t.thru})),sk}}
 // snapshot of the live round S. x = {par,si (the holes played), lo, ao, nl, auto, t}
 function hBuild(S,x,now,id){x=x||{};return hClean({id,t:x.t||now,u:now,auto:x.auto,date:S.date,comp:S.comp,ev:S.ev&&S.ev.name||'',course:S.course,holes:S.holes,nl:x.nl,lo:x.lo,ao:x.ao,par:x.par,si:x.si,tstart:S.tstart,tint:S.tint,groups:S.groups,hi:S.hi,hcp:S.hcp,ptee:S.ptee,scores:S.scores,tf:S.tf,carry:S.carry,notes:S.notes,twoPot:S.twoPot,lbm:S.lbm,solo:!!S.solo})}
 const hSort=l=>l.slice().sort((a,b)=>(a.date<b.date?1:a.date>b.date?-1:0)||b.t-a.t||(a.id<b.id?-1:1));
@@ -425,7 +451,7 @@ function hDecode(p){p=String(p||'');if(p.length<2||p.length>40000)return null;co
 // solo round: gross / nett / points split into Out, In and Total for one player (sc = scores for the holes played)
 function soloSplit(sc,par,si,hcp,n){const z=()=>({g:0,net:0,pts:0,th:0,pp:0}),o={out:z(),inn:z(),tot:z()};for(let h=0;h<n;h++){const v=+(sc||[])[h]||0;if(!v)continue;const so=strokesOn(hcp||0,si[h],n,n===9?si:undefined),k=n===18&&h>=9?'inn':'out';for(const t of [o[k],o.tot]){t.g+=v;t.net+=v-so;t.pts+=stbl(v,par[h],so);t.th++;t.pp+=par[h]}}return o}
 function hURL(base,s){return base+'#/saved='+hEncode(s)}
-if(typeof module!=='undefined')module.exports={soloSplit,b64uEnc,hClean,hCompute,hBoard,hTeamBoard,hRes,hBuild,hSort,hMerge,hFilter,hPlayers,hPlayerHist,hUsage,hLoad,hSave,hExport,hImportText,hEncode,hDecode,hURL,hNewId,HIST_MAX,HIST_WARN,HIST_KEY,HIST_BAD,b64uDec,lzc,lzd,rosterClean,rosterEncode,rosterDecode,rosterURL,rosterMerge,clubNorm,clubOk,clubGen,clubFmt,clubPack,clubUnpack,shareRoute,CODE_AL,normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard,nineSlice,nineLabel};
+if(typeof module!=='undefined')module.exports={pairOf,arrangeGroup,groupPairs,makeGroupsKeep,groupsFromMan,teamRows,teamName,soloSplit,b64uEnc,hClean,hCompute,hBoard,hTeamBoard,hRes,hBuild,hSort,hMerge,hFilter,hPlayers,hPlayerHist,hUsage,hLoad,hSave,hExport,hImportText,hEncode,hDecode,hURL,hNewId,HIST_MAX,HIST_WARN,HIST_KEY,HIST_BAD,b64uDec,lzc,lzd,rosterClean,rosterEncode,rosterDecode,rosterURL,rosterMerge,clubNorm,clubOk,clubGen,clubFmt,clubPack,clubUnpack,shareRoute,CODE_AL,normKey,sameCourse,checkCourse,haversineKm,nearestCourse,groupSizes,makeGroups,strokesOn,addMin,stbl,teamHole,skins,twoClubs,evRound,evBoard,nineSlice,nineLabel};
 </script>
 <script>
 if(typeof document!=='undefined'){
@@ -463,8 +489,8 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 // hash import
 function enc(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))))}
-function link(){return location.href.split('#')[0]+'#d='+enc({g:S.groups,h:S.holes,nn:isBack()?'back':undefined,t:S.tstart,i:S.tint,c:S.course.name,p:S.course.par,s:S.course.si,m:S.course.m,e:S.course.tee,te:S.course.tees})}
-function loadHash(){const m=location.hash.match(/#d=([^&]+)/);if(!m)return;try{const d=dec(m[1]);S.groups=d.g;S.holes=d.h;S.nine=d.nn==='back'?'back':'front';S.tstart=d.t;S.tint=d.i;S.players=d.g.flat();if(d.p){S.course={name:d.c,par:d.p,si:d.s,m:d.m,tee:d.e,tees:d.te};if(!S.courses.some(c=>c.name===d.c))S.courses.push(JSON.parse(JSON.stringify(S.course)))}S.scores={};S.solo=false;S.histId=S.noAuto=null;S.tab='draw';save();toast('Draw loaded from link');S._fromLink=1}catch(e){toast('Could not read shared link')}}
+function link(){return location.href.split('#')[0]+'#d='+enc({g:S.groups,h:S.holes,nn:isBack()?'back':undefined,t:S.tstart,i:S.tint,c:S.course.name,p:S.course.par,s:S.course.si,m:S.course.m,e:S.course.tee,te:S.course.tees,f:pairTF()})}
+function loadHash(){const m=location.hash.match(/#d=([^&]+)/);if(!m)return;try{const d=dec(m[1]);S.groups=d.g;S.holes=d.h;S.nine=d.nn==='back'?'back':'front';S.tstart=d.t;S.tint=d.i;S.players=d.g.flat();if(d.f&&typeof d.f==='object'){S.tf={};for(const k in d.f)if(+k<d.g.length&&d.f[k]==='pairs')S.tf[k]={f:'pairs',k:2}}if(d.p){S.course={name:d.c,par:d.p,si:d.s,m:d.m,tee:d.e,tees:d.te};if(!S.courses.some(c=>c.name===d.c))S.courses.push(JSON.parse(JSON.stringify(S.course)))}S.scores={};S.solo=false;S.histId=S.noAuto=null;S.tab='draw';save();toast('Draw loaded from link');S._fromLink=1}catch(e){toast('Could not read shared link')}}
 loadHash();
 track('app_opened',{via:S._fromLink?'shared_link':'direct',holes:S.holes});if(S._fromLink){track('shared_link_opened',{groups:S.groups.length,holes:S.holes});delete S._fromLink}
 // players
@@ -526,16 +552,72 @@ function setHoles(v){if(locked())return noEdit();const ns=nineSel(),h=v==='f'||v
 function renderDraw(){
  const ns=nineSel();seg('seg-holes',ns?[[18,'18 holes'],['f','Front 9'],['b','Back 9']]:[[18,'18 holes'],[9,'9 holes']],S.holes===18?18:ns?(isBack()?'b':'f'):9,setHoles);
  $('nine-hint').textContent=S.holes!==9?'':ns?(isBack()?'Back 9 = holes 10–18 of ':'Front 9 = holes 1–9 of ')+S.course.name+'. Enter the normal 18-hole handicap: strokes fall only on this nine’s holes, by their 18-hole stroke index.':'9-hole card: holes 1–9.';
- seg('seg-size',[['auto','Auto'],[4,'4-ball'],[3,'3-ball'],[2,'2-ball']],S.size,v=>{if(locked())return noEdit();S.size=v;save();renderDraw()});
+ seg('seg-size',[['auto','Auto'],[4,'4-ball'],[3,'3-ball'],[2,'2-ball']],S.size,v=>{if(locked())return noEdit();S.size=v;dpSave();save();renderDraw()});
+ renderMode();
  $('tstart').value=S.tstart;$('tint').value=S.tint;
- $('groups').innerHTML=S.solo&&S.groups.length?`<div class="card grp"><h3><span>🏌️ Solo round</span><span>⛳ ${esc(S.tstart)}</span></h3><div>${esc(S.groups[0][0])} · ${esc(S.course.name)}${nameTag()}</div><div class="mut" style="margin-top:6px">No draw needed. To play with others, tick 2+ players and tap Randomise (that replaces the solo scorecard).</div></div>`:S.groups.map((g,i)=>`<div class="card grp"><h3><span>Group ${i+1}</span><span>⛳ ${addMin(S.tstart,i*S.tint)}</span></h3><ol>${g.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`).join('');
+ $('groups').innerHTML=S.solo&&S.groups.length?`<div class="card grp"><h3><span>🏌️ Solo round</span><span>⛳ ${esc(S.tstart)}</span></h3><div>${esc(S.groups[0][0])} · ${esc(S.course.name)}${nameTag()}</div><div class="mut" style="margin-top:6px">No draw needed. To play with others, tick 2+ players and tap Random draw (that replaces the solo scorecard).</div></div>`:S.groups.map((g,i)=>`<div class="card grp"><h3><span>Group ${i+1}</span><span>⛳ ${addMin(S.tstart,i*S.tint)}</span></h3>${drawList(g)}</div>`).join('');
  $('drawact').classList.toggle('hidden',!S.groups.length||!!S.solo);
 }
 $('tstart').onchange=e=>{if(locked()){renderDraw();return noEdit()}S.tstart=e.target.value||'07:30';save();renderDraw()};$('tint').onchange=e=>{if(locked()){renderDraw();return noEdit()}S.tint=Math.max(0,+e.target.value||0);save();renderDraw()};
+// ---- v18: random draw vs set my own groups, partners ----
+const DPK='teedraw.drawpref';
+if(S.dm!=='random'&&S.dm!=='manual'){let p={};try{p=JSON.parse(localStorage.getItem(DPK)||'{}')||{}}catch(e){}S.dm=p.dm==='manual'?'manual':'random';S.keep=!!p.keep;if(p.size!=null&&['auto','4','3','2',4,3,2].includes(p.size))S.size=p.size}
+S.kp=Array.isArray(S.kp)?S.kp:[];S.man=S.man&&typeof S.man==='object'?S.man:{};
+function dpSave(){try{localStorage.setItem(DPK,JSON.stringify({dm:S.dm,size:S.size,keep:!!S.keep}))}catch(e){}}
+function pairTF(){const o={};let n=0;(S.groups||[]).forEach((g,i)=>{if(((S.tf||{})[i]||{}).f==='pairs'){o[i]='pairs';n++}});return n?o:undefined}
+function cleanKP(P){const set=new Set(P);S.kp=S.kp.filter(x=>set.has(x[0])&&set.has(x[1]))}
+function gPairs(g){const f=((S.tf||{})[S.groups.indexOf(g)]||{}).f;if(f==='pairs'&&g.length>=3)return g.length>=4?[[g[0],g[1]],[g[2],g[3]]]:[[g[0],g[1]]];if(f==='best1'&&g.length===2&&!groupPairs(g,S.kp).length)return[];return groupPairs(g,S.kp)}
+function drawList(g){const pr=gPairs(g),f=(S.tf||{})[S.groups.indexOf(g)]||{};const inP=new Set(pr.flat());
+ const tag=(p,i)=>pr.length&&inP.has(p)?`<span class="ptag">🤝 ${g.length===2?'partners':(i<2?'A+B':'C+D')}</span>`:'';
+ return `<ol>${g.map((p,i)=>`<li>${esc(p)}${tag(p,i)}</li>`).join('')}</ol>`+(f.f==='pairs'&&g.length>=3?`<div class="mut" style="margin-top:4px">${esc(g[0])} & ${esc(g[1])} v ${g.length>=4?esc(g[2])+' & '+esc(g[3]):esc(g[2])} · better ball</div>`:'')}
+function drawLines(g){const pr=gPairs(g),done=new Set(),out=[];g.forEach(p=>{if(done.has(p))return;const x=pr.find(x=>x[0]===p);if(x){out.push('• '+x[0]+' & '+x[1]+' 🤝');done.add(x[1])}else out.push('• '+p)});return out.join('\n')}
+function capK(){return S.size==='auto'?4:Math.max(2,Math.min(4,+S.size||4))}
+function manCount(P){const used=P.map(p=>S.man[p]).filter(v=>v!=null);return Math.max(1,Math.ceil(P.length/capK()),used.length?Math.max(...used)+1:0,S.mg||0)}
+function gcnt(gi,P,skip){return P.filter(p=>p!==skip&&S.man[p]===gi).length}
+function renderMode(){const P=pool(),man=S.dm==='manual';cleanKP(P);
+ seg('seg-mode',[['random','🎲 Random draw'],['manual','✋ Set my own groups']],S.dm,v=>{S.dm=v==='manual'?'manual':'random';dpSave();save();renderDraw()});
+ const n=P.length,sz=groupSizes(n,S.size);
+ $('size-hint').textContent=man?`Aim for ${capK()} per group (max 4). Tap a group number next to each player.`:(n>=2?`${n} players → `+sz.map(x=>x+'-ball').join(', '):'Tick players on the Players tab.');
+ $('keepw').classList.toggle('hidden',man||n<2);$('keepp').checked=!!S.keep;
+ $('drawbtn').textContent=man?'✅ Use these groups':(S.keep&&S.kp.length?'🎲 Random draw (keep partners)':'🎲 Random draw');
+ $('reshuf').classList.toggle('hidden',man);
+ const box=$('manual');if(!(man||S.keep)||n<2){box.innerHTML='';return}
+ const opt=p=>`<select aria-label="Partner for ${esc(p)}" onchange="setPartner(${JSON.stringify(p).replace(/"/g,'&quot;')},this.value)"><option value="">${man?'No partner (plays own ball)':'No set partner'}</option>${P.filter(q=>q!==p).map(q=>`<option value="${esc(q)}" ${pairOf(p,S.kp)===q?'selected':''}>🤝 Partner: ${esc(q)}</option>`).join('')}</select>`;
+ const J=p=>JSON.stringify(p).replace(/"/g,'&quot;');
+ if(!man){box.innerHTML=`<div class="mhd">Set partners</div>`+P.map(p=>`<div class="mrow"><span class="mn">${esc(p)}</span>${opt(p)}</div>`).join('');return}
+ const N=manCount(P),row=p=>`<div class="mrow ${S.man[p]==null?'miss':''}" data-p="${esc(p)}"><span class="mn">${esc(p)}</span><span class="gch">${[...Array(N).keys()].map(i=>`<button class="${S.man[p]===i?'on':''}" onclick="setMan(${J(p)},${i})" aria-label="Group ${i+1}">${i+1}</button>`).join('')}</span>${opt(p)}</div>`;
+ let h='';for(let i=0;i<N;i++){const in_=P.filter(p=>S.man[p]===i);h+=`<div class="mhd">Group ${i+1} · ⛳ ${addMin(S.tstart,i*S.tint)} <span class="mut">(${in_.length}/${capK()})</span></div>`+(in_.map(row).join('')||'<div class="mut" style="padding:4px 0">Empty</div>')}
+ const un=P.filter(p=>S.man[p]==null);if(un.length)h+=`<div class="mhd" style="color:var(--red)">Not in a group yet (${un.length})</div>`+un.map(row).join('');
+ h+=`<div class="btns" style="margin-top:8px"><button class="sec sm" onclick="manAdd()">＋ Group</button><button class="sec sm" onclick="manFill()">🎲 Fill the rest</button><button class="sec sm" onclick="manClear()">Clear</button></div>`;
+ box.innerHTML=h}
+window.setKeep=v=>{S.keep=!!v;dpSave();save();renderDraw()};
+window.setMan=(p,gi)=>{if(locked())return noEdit();const P=pool();if(S.man[p]===gi){delete S.man[p];const q=pairOf(p,S.kp);save();renderDraw();return}
+ const q=pairOf(p,S.kp),need=q!=null&&S.man[q]!==gi?2:1,have=gcnt(gi,P,p)-(q!=null&&S.man[q]===gi?1:0);
+ if(have+need>4){if(need===2&&have+1<=4){S.kp=S.kp.filter(x=>x[0]!==p&&x[1]!==p);toast('Group '+(gi+1)+' only has room for one – partner removed');}else return toast('Group '+(gi+1)+' is full (max 4)')}
+ S.man[p]=gi;const q2=pairOf(p,S.kp);if(q2!=null)S.man[q2]=gi;save();renderDraw()};
+window.setPartner=(p,q)=>{if(locked()){renderDraw();return noEdit()}S.kp=S.kp.filter(x=>x[0]!==p&&x[1]!==p&&x[0]!==q&&x[1]!==q);
+ if(q){S.kp.push([p,q]);if(S.dm==='manual'){const P=pool(),gi=S.man[p]!=null?S.man[p]:S.man[q];if(gi!=null){const others=P.filter(x=>x!==p&&x!==q&&S.man[x]===gi).length;if(others+2>4){S.kp.pop();toast('Group '+(gi+1)+' is full (max 4)');renderDraw();return}S.man[p]=S.man[q]=gi}}}
+ save();renderDraw()};
+window.manAdd=()=>{S.mg=manCount(pool())+1;renderDraw()};
+window.manClear=()=>{S.man={};S.mg=0;save();renderDraw()};
+window.manFill=()=>{if(locked())return noEdit();const P=pool(),k=capK(),un=shuffle(P.filter(p=>S.man[p]==null));if(!un.length)return toast('Everyone is already in a group');
+ const units=[],seen=new Set();for(const p of un){if(seen.has(p))continue;seen.add(p);const q=pairOf(p,S.kp);if(q!=null&&S.man[q]==null&&!seen.has(q)){seen.add(q);units.push([p,q])}else units.push([p])}
+ units.sort((a,b)=>b.length-a.length);let N=manCount(P);
+ for(const u of units){let gi=-1;for(let i=0;i<N;i++)if(gcnt(i,P)+u.length<=k&&(gi<0||gcnt(i,P)<gcnt(gi,P)))gi=i;if(gi<0){gi=N++;S.mg=N}u.forEach(p=>S.man[p]=gi)}
+ save();renderDraw()};
+function commitGroups(G,P,how){S.groups=G;S.solo=false;S.tf=S.tf||{};const tf={};G.forEach((g,i)=>{const o=S.tf[i];const pr=groupPairs(g,S.kp);
+  if(g.length>=3&&pr.length&&(g.length===4?pr.length===2:true))tf[i]={f:'pairs',k:2};else if(g.length===2&&pr.length)tf[i]={f:'best1',k:1};else if(o&&o.f!=='pairs')tf[i]=o});S.tf=tf;
+ S.hi=S.hi||{};P.forEach(p=>{const r=R.find(r=>r.n===p);if(r&&r.hi!==''&&r.hi!=null&&(S.hi[p]==null||S.hi[p]===''))S.hi[p]=r.hi});if(typeof recalcCH==='function')recalcCH();S.scores={};S.started=S.finished=false;S.histId=S.noAuto=null;track('draw_made',{players:P.length,groups:S.groups.length,holes:S.holes,size:String(S.size),how});S.cg=0;S.ch=0;save();renderDraw();history.replaceState(null,'',link())}
+window.useGroups=()=>{if(locked())return noEdit();const P=pool();if(P.length===1){setTab('players');soloOpen(P[0]);toast('Just one player – starting a solo round',2600);return}if(P.length<2){toast('Tick or add at least 2 players');setTab('players');return}
+ const r=groupsFromMan(P,S.man,S.kp);if(r.err){toast(r.err,2600);return}
+ if(S.groups.length&&Object.keys(S.scores).length&&!confirm('Changing the groups clears scores. Continue?'))return;
+ commitGroups(r.groups,P,'manual');toast('Groups set ✅')};
+window.drawGo=()=>S.dm==='manual'?useGroups():randomise();
 window.randomise=()=>{if(locked())return noEdit();const P=pool();if(P.length===1){setTab('players');soloOpen(P[0]);toast('Just one player – starting a solo round',2600);return}if(P.length<2){toast('Tick or add at least 2 players');setTab('players');return}
  if(S.groups.length&&Object.keys(S.scores).length&&!confirm('Reshuffle clears scores. Continue?'))return;
- S.groups=makeGroups(P,S.size);S.solo=false;S.hi=S.hi||{};P.forEach(p=>{const r=R.find(r=>r.n===p);if(r&&r.hi!==''&&r.hi!=null&&(S.hi[p]==null||S.hi[p]===''))S.hi[p]=r.hi});if(typeof recalcCH==='function')recalcCH();S.scores={};S.started=S.finished=false;S.histId=S.noAuto=null;track('draw_made',{players:P.length,groups:S.groups.length,holes:S.holes,size:String(S.size)});S.cg=0;S.ch=0;save();renderDraw();history.replaceState(null,'',link())};
-function drawText(){return `⛳ *TeeDraw – ${S.course.name}* (${S.holes===9?(nineName()||'9 holes'):S.holes+' holes'})\n\n`+S.groups.map((g,i)=>`*Group ${i+1}* – ${addMin(S.tstart,i*S.tint)}\n`+g.map(p=>'• '+p).join('\n')).join('\n\n')+`\n\nOpen the draw & scorecard:\n${link()}`}
+ cleanKP(P);let G;if(S.keep&&S.kp.length){const r=makeGroupsKeep(P,S.size,S.kp);G=r.groups;if(r.split.length)toast('No room to keep '+r.split.map(x=>x.join(' & ')).join(', ')+' together',3000)}else G=makeGroups(P,S.size);
+ commitGroups(G,P,S.keep&&S.kp.length?'keep':'random')};
+function drawText(){return `⛳ *TeeDraw – ${S.course.name}* (${S.holes===9?(nineName()||'9 holes'):S.holes+' holes'})\n\n`+S.groups.map((g,i)=>`*Group ${i+1}* – ${addMin(S.tstart,i*S.tint)}\n`+drawLines(g)).join('\n\n')+`\n\nOpen the draw & scorecard:\n${link()}`}
 function wa(t){window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
 window.shareDraw=()=>{track('draw_shared',{groups:S.groups.length,holes:S.holes});wa(drawText())};
 window.copyLink=()=>{navigator.clipboard?.writeText(link()).then(()=>toast('Link copied'),()=>prompt('Copy link',link()))};
@@ -576,17 +658,17 @@ function renderScore(){
 }
 // leaderboard
 function board(){const m=S.lbm;return S.groups.flatMap((g,gi)=>g.map(p=>({p,gi,...tot(p)}))).filter(r=>r.th).sort((a,b)=>(m==='pts'?b.pts-a.pts:m==='net'?a.nto-b.nto:a.to-b.to)||b.th-a.th)}
-function teamBoard(){return S.groups.map((g,i)=>({i,g,...groupTeam(i)})).filter(r=>r.thru).sort((a,b)=>b.tot-a.tot||b.thru-a.thru)}
+function teamBoard(){return teamRows(S.groups,S.groups.map(ptsGrid),S.tf||{}).map(r=>({...r,i:r.gi,g:r.names})).filter(r=>r.thru).sort((a,b)=>b.tot-a.tot||b.thru-a.thru)}
 function extras(){return S.groups.map((g,gi)=>{const sk=skins(ptsGrid(g),S.carry!==false);return g.map((p,i)=>{const q=(S.notes||{})[p]||{};return{p,gi,sk:sk.won[i]+(+q.skins||0),u:+q.units||0,f:+q.fines||0,t:q.text||''}})}).flat()}
 const LBO=()=>S.solo?[['gross','Gross'],['net','Nett'],['pts','Points']]:[['gross','Gross'],['net','Nett'],['pts','Points'],['team','Teams']];
 function renderBoard(){if(S.solo&&S.lbm==='team')S.lbm='pts';if(S.lbm==='team'){seg('seg-lb',LBO(),S.lbm,v=>{S.lbm=v;save();renderBoard()});
- const b=teamBoard();$('lb').innerHTML='<tr><th>#</th><th style="text-align:left">Group</th><th>Format</th><th>Thru</th><th>Pts</th></tr>'+(b.map((r,k)=>`<tr><td>${k+1}</td><td>G${r.i+1} <span class="mut">${r.g.length}-ball · ${r.g.map(esc).join(', ')}</span></td><td class="mut">${fmtLabel(r.o)}</td><td>${r.thru===S.holes?'F':r.thru}</td><td><b>${r1(r.tot)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="mut">No scores yet.</td></tr>')+(new Set(b.map(r=>r.g.length)).size>1&&b.some(r=>r.o.f!=='avg')?'<tr><td colspan="5" class="mut">Groups are different sizes: pick “Average of the group” on each card for a fair comparison.</td></tr>':'');return}
+ const b=teamBoard();$('lb').innerHTML='<tr><th>#</th><th style="text-align:left">Group</th><th>Format</th><th>Thru</th><th>Pts</th></tr>'+(b.map((r,k)=>`<tr><td>${k+1}</td><td>G${r.i+1}${r.side?' '+(r.side==='A'?'A+B':'C+D'):''} <span class="mut">${r.side?'partners':r.g.length+'-ball'} · ${r.g.map(esc).join(', ')}</span></td><td class="mut">${fmtLabel(r.o)}</td><td>${r.thru===S.holes?'F':r.thru}</td><td><b>${r1(r.tot)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="mut">No scores yet.</td></tr>')+(new Set(b.map(r=>r.g.length)).size>1&&b.some(r=>r.o.f!=='avg')?'<tr><td colspan="5" class="mut">Groups are different sizes: pick “Average of the group” on each card for a fair comparison.</td></tr>':'');return}
  seg('seg-lb',LBO(),S.lbm,v=>{S.lbm=v;save();renderBoard()});
  const b=board();let pos=0,last=null;
  $('lb').innerHTML='<tr><th>#</th><th style="text-align:left">Player</th><th>Thru</th><th>'+(S.lbm==='pts'?'Gross':S.lbm==='net'?'Nett':'Gross')+'</th><th>'+(S.lbm==='pts'?'Pts':'To par')+'</th></tr>'+(b.map((r,i)=>{const k=S.lbm==='pts'?r.pts:S.lbm==='net'?r.nto:r.to;if(k!==last){pos=i+1;last=k}return `<tr><td>${pos}</td><td>${esc(r.p)} ${S.solo?"":`<span class="mut">G${r.gi+1}</span>`}</td><td>${r.th===S.holes?'F':r.th}</td><td>${S.lbm==='net'?r.net:r.g}</td><td class="${S.lbm==='pts'?'':cls(k)}"><b>${S.lbm==='pts'?k:rel(k)}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="mut">No scores yet.</td></tr>')}
 window.shareBoard=()=>{track('leaderboard_shared',{mode:S.lbm,holes:S.holes});
  const inc=$('incx').checked,TC=inc?twoList():[],tct=TC.length?`\n\n*Two Clubs* (pot R${+S.twoPot||0}${S.twoPot?`, R${Math.round(S.twoPot/TC.length*100)/100} each`:''})\n`+TC.map(t=>`${t.p} – hole ${t.h+1+lo()}`).join('\n'):'',X=inc?extras():[],xs=X.filter(x=>x.sk||x.u||x.f||x.t),xt=xs.length?'\n\n*Skins · Units · Fines*\n'+xs.map(x=>`${x.p}: ${x.sk} skins${x.u?`, ${x.u} units`:''}${x.f?`, R${x.f} fines`:''}${x.t?` – ${x.t}`:''}`).join('\n')+`\nTotal: ${X.reduce((a,x)=>a+x.sk,0)} skins · ${X.reduce((a,x)=>a+x.u,0)} units · R${X.reduce((a,x)=>a+x.f,0)} fines`:'';
- if(S.lbm==='team'){wa(`🏆 *TeeDraw team leaderboard – ${S.course.name}${nameTag()}*\n\n`+teamBoard().map((r,k)=>`${k+1}. Group ${r.i+1} (${r.g.join(', ')}) – ${r1(r.tot)} pts [${fmtLabel(r.o)}, ${r.thru===S.holes?'F':'thru '+r.thru}]`).join('\n')+xt+tct+'\n\nMade with TeeDraw');return}const b=board();wa(`🏆 *TeeDraw leaderboard – ${S.course.name}${nameTag()}* (${S.lbm==='pts'?'Stableford':S.lbm==='net'?'nett':'gross'})\n\n`+b.map((r,i)=>`${i+1}. ${r.p} – ${S.lbm==='pts'?r.pts+' pts':rel(S.lbm==='net'?r.nto:r.to)} (${S.lbm==='net'?r.net:r.g}, ${r.th===S.holes?'F':'thru '+r.th})`).join('\n')+xt+tct+'\n\nMade with TeeDraw')};
+ if(S.lbm==='team'){wa(`🏆 *TeeDraw team leaderboard – ${S.course.name}${nameTag()}*\n\n`+teamBoard().map((r,k)=>`${k+1}. ${teamName(r)} (${r.g.join(', ')}) – ${r1(r.tot)} pts [${fmtLabel(r.o)}, ${r.thru===S.holes?'F':'thru '+r.thru}]`).join('\n')+xt+tct+'\n\nMade with TeeDraw');return}const b=board();wa(`🏆 *TeeDraw leaderboard – ${S.course.name}${nameTag()}* (${S.lbm==='pts'?'Stableford':S.lbm==='net'?'nett':'gross'})\n\n`+b.map((r,i)=>`${i+1}. ${r.p} – ${S.lbm==='pts'?r.pts+' pts':rel(S.lbm==='net'?r.nto:r.to)} (${S.lbm==='net'?r.net:r.g}, ${r.th===S.holes?'F':'thru '+r.th})`).join('\n')+xt+tct+'\n\nMade with TeeDraw')};
 window.proInfo=()=>alert('TeeDraw Pro is coming soon: cloud-saved courses, season leaderboards, Stableford, club branding and no ads.');
 // tabs
 let taps=0,tt;window.logoTap=()=>{taps++;clearTimeout(tt);tt=setTimeout(()=>taps=0,1500);if(taps>=5){taps=0;setTab('stats')}};
@@ -607,7 +689,7 @@ const gfmt=()=>{S.tf=S.tf||{};return S.tf[S.cg]||{f:'best2',k:2}};
 window.setFmt=(f,k)=>{if(locked())return noEdit();const o=gfmt();S.tf[S.cg]={f:f||o.f,k:k||o.k};save();renderCard();renderBoardIfOpen()};
 function ptsGrid(g){const par=cpar(),si=csi();return g.map(p=>{const s=sc(p);return [...Array(S.holes).keys()].map(h=>s[h]?stbl(s[h],par[h],shots(p,h,si)):null)})}
 function groupTeam(gi){const g=S.groups[gi],P=ptsGrid(g),o=(S.tf||{})[gi]||{f:'best2',k:2};const per=[...Array(S.holes).keys()].map(h=>teamHole(P.map(r=>r[h]),o.f,o.k,g.length));return{per,o,tot:per.reduce((a,b)=>a+(b||0),0),thru:per.filter(v=>v!=null).length}}
-const fmtLabel=o=>({best2:'B/B (best 2)',best1:'Better ball',alliance:'Alliance ('+o.k+' count)',avg:'Group average'})[o.f];
+const fmtLabel=o=>({best2:'B/B (best 2)',best1:'Better ball',alliance:'Alliance ('+o.k+' count)',avg:'Group average',pairs:'Partners (A+B v C+D)'})[o.f];
 const r1=v=>v==null?'':(Math.round(v*10)/10);
 function renderCard(){
  const par=cpar(),si=csi(),n=S.holes,hs=[...Array(n).keys()],T=tees(),LO=lo(),AO=ao();
@@ -618,7 +700,7 @@ function renderCard(){
  S.cg=Math.min(S.cg,S.groups.length-1);const g=S.groups[S.cg],o=gfmt();
  ['tfcard','notescard'].forEach(k=>$(k).classList.toggle('hidden',!!S.solo));$('cgsel').classList.toggle('hidden',!!S.solo);
  $('tfmt').value=o.f;$('tk').value=Math.min(o.k,3);$('kwrap').style.display=o.f==='alliance'?'':'none';
- $('tnote').textContent=g.length===1?'Single player: team score = own points.':o.f==='avg'?`Total points ÷ ${g.length} players per hole, so 2-, 3- and 4-balls compare fairly.`:(o.f==='best2'&&g.length<=2)?'2-ball: best 2 = both scores count.':(o.f==='alliance'&&o.k>=g.length)?`${g.length}-ball: all ${g.length} scores count.`:(new Set(S.groups.map(x=>x.length)).size>1?'Groups differ in size: use “Average” for a fair team leaderboard.':`${fmtLabel(o)}: best ${o.f==='best1'?1:o.f==='best2'?2:o.k} Stableford score(s) per hole count.`);
+ $('tnote').textContent=g.length===1?'Single player: team score = own points.':o.f==='pairs'?(g.length>=4?`Partners: ${g[0]} & ${g[1]} v ${g[2]} & ${g[3]} – better ball of each pair, each pair is a team on the leaderboard.`:g.length===3?`Partners ${g[0]} & ${g[1]} (better ball) v ${g[2]} on their own.`:'2-ball: the two of you are partners – better ball.'):o.f==='avg'?`Total points ÷ ${g.length} players per hole, so 2-, 3- and 4-balls compare fairly.`:(o.f==='best2'&&g.length<=2)?'2-ball: best 2 = both scores count.':(o.f==='alliance'&&o.k>=g.length)?`${g.length}-ball: all ${g.length} scores count.`:(new Set(S.groups.map(x=>x.length)).size>1?'Groups differ in size: use “Average” for a fair team leaderboard.':`${fmtLabel(o)}: best ${o.f==='best1'?1:o.f==='best2'?2:o.k} Stableford score(s) per hole count.`);
  $('cgsel').innerHTML=S.groups.map((x,i)=>`<option value="${i}" ${i===S.cg?'selected':''}>Group ${i+1} · ${addMin(S.tstart,i*S.tint)}</option>`).join('');
  $('ctime').textContent=addMin(S.tstart,S.cg*S.tint);
  // header: Player | Tee colour | HI | CH ; A,B players then MARKER C,D(+)
@@ -641,7 +723,7 @@ function renderCard(){
  const team=(lab,idx,f,k)=>{const per=hs.map(hh=>teamHole(idx.map(i=>P[i][hh]),f,k,idx.length));return row(lab,(c,kk)=>`<td class="tm${kk}">${r1(per[c])}</td>`,c=>{const[a,b]=rng(c);return r1(per.slice(a,b).reduce((x,v)=>x+(v||0),0))||''},null,'tr')};
  g.slice(0,2).forEach((p,i)=>h+=prow2(p,i));
  if(g.length>=2)h+=team('B/B SCORE <small>A+B</small>',[0,1],'best1',1);
- if(!S.solo)h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
+ if(!S.solo&&!(o.f==='pairs'&&g.length>=3))h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
  if(g.length>=4)h+=team('B/B SCORE <small>C+D</small>',[2,3],'best1',1);
  if(g.length>2)h+=`<tr class="mk"><th class="lab">MARKER</th><td colspan="${cols.length+3}"></td></tr>`+g.slice(2).map((p,i)=>prow2(p,i+2)).join('');
  const x=$('sc').scrollLeft;$('sc').innerHTML=`<table>${h}</table>`;$('sc').scrollLeft=x;
@@ -1047,7 +1129,7 @@ window.hPBack=()=>{if(HV.back==='round'&&hById(HV.id)){HV.v='round'}else HV.v='l
 window.hGrp=i=>{HV.gi=+i;renderHistory()};window.hMode=m=>{HV.lbm=m;renderHistory()};
 // leaderboard table (same look as the Leaders tab)
 function hLBHTML(s,m){const c=hCompute(s),nm=n=>`<a class="pn" data-n="${esc(n)}" onclick="hPlayer(this.dataset.n)">${esc(n)}</a>`;
- if(m==='team'){const b=hTeamBoard(c);return '<tr><th>#</th><th style="text-align:left">Group</th><th>Format</th><th>Thru</th><th>Pts</th></tr>'+(b.map((r,k)=>`<tr><td>${k+1}</td><td>G${r.gi+1} <span class="mut">${s.groups[r.gi].length}-ball · ${s.groups[r.gi].map(esc).join(', ')}</span></td><td class="mut">${fmtLabel(r.o)}</td><td>${r.thru===s.holes?'F':r.thru}</td><td><b>${hR1(r.tot)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="mut">No scores.</td></tr>')}
+ if(m==='team'){const b=hTeamBoard(c);return '<tr><th>#</th><th style="text-align:left">Group</th><th>Format</th><th>Thru</th><th>Pts</th></tr>'+(b.map((r,k)=>`<tr><td>${k+1}</td><td>G${r.gi+1}${r.side?' '+(r.side==='A'?'A+B':'C+D'):''} <span class="mut">${r.side?'partners':r.names.length+'-ball'} · ${r.names.map(esc).join(', ')}</span></td><td class="mut">${fmtLabel(r.o)}</td><td>${r.thru===s.holes?'F':r.thru}</td><td><b>${hR1(r.tot)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="mut">No scores.</td></tr>')}
  const b=hBoard(c,m);let pos=0,last=null;
  return '<tr><th>#</th><th style="text-align:left">Player</th><th>Thru</th><th>'+(m==='pts'?'Gross':m==='net'?'Nett':'Gross')+'</th><th>'+(m==='pts'?'Pts':'To par')+'</th></tr>'+(b.map((r,i)=>{const k=m==='pts'?r.pts:m==='net'?r.nto:r.to;if(k!==last){pos=i+1;last=k}return `<tr><td>${pos}</td><td>${nm(r.p)} ${s.solo?"":`<span class="mut">G${r.gi+1}</span>`}</td><td>${r.th===s.holes?'F':r.th}</td><td>${m==='net'?r.net:r.g}</td><td class="${m==='pts'?'':cls(k)}"><b>${m==='pts'?k:rel(k)}</b></td></tr>`}).join('')||'<tr><td colspan="5" class="mut">No scores.</td></tr>')}
 // the printed-style scorecard, read-only (mirrors renderCard)
@@ -1069,7 +1151,7 @@ function hCardHTML(s,gi){const c=hCompute(s),n=s.holes,hs=[...Array(n).keys()],p
  const team=(lab,idx,f,k)=>{const per=hs.map(hh=>teamHole(idx.map(i=>P[i][hh]),f,k,idx.length));return row(lab,(kk,yy)=>`<td class="tm${yy}">${hR1(per[kk])}</td>`,kk=>{const[a,b]=rng(kk);return hR1(per.slice(a,b).reduce((x,v)=>x+(v||0),0))||''},null,'tr')};
  g.slice(0,2).forEach((p,i)=>h+=prow2(p,i));
  if(g.length>=2)h+=team('B/B SCORE <small>A+B</small>',[0,1],'best1',1);
- if(!s.solo)h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
+ if(!s.solo&&!(o.f==='pairs'&&g.length>=3))h+=team(`${o.f==='alliance'?'ALLIANCE':'TEAM'} <small>${fmtLabel(o)}</small>`,g.map((_,i)=>i),o.f,o.k);
  if(g.length>=4)h+=team('B/B SCORE <small>C+D</small>',[2,3],'best1',1);
  if(g.length>2)h+=`<tr class="mk"><th class="lab">MARKER</th><td colspan="${cols.length+3}"></td></tr>`+g.slice(2).map((p,i)=>prow2(p,i+2)).join('');
  const sk=c.skinsBy[gi],tc=twoClubs(s.groups,s.scores,par,n),pot=+s.twoPot||0,each=tc.length?Math.round(pot/tc.length*100)/100:0;
@@ -1232,7 +1314,7 @@ function handleRoute(){const r=shareRoute(location.hash);if(!r)return;history.re
  if(r.t==='round'){openRound(r.id,r.k)}}
 addEventListener('hashchange',()=>{if(shareRoute(location.hash))handleRoute()});
 // -- suggest a feature (queued offline, sent through te_submit_suggestion; needs supabase-share.sql) --
-const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v17',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
+const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v18',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
 const sugGet=()=>jget(SUGQ,[]).filter(x=>x&&x.text&&Date.now()-(x.t||0)<30*864e5);
 const sugSet=a=>jset(SUGQ,a);
 function devId(){let d=localStorage.getItem(SUGD);if(!d){d=rid(16);localStorage.setItem(SUGD,d)}return d}
