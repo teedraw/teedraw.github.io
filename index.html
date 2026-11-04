@@ -100,13 +100,13 @@ header .hsv{font-size:13px;font-weight:700;padding:4px 11px;background:#fff3;col
 .pchip{background:#e3efe0;color:var(--g);padding:6px 12px;border-radius:99px;font-size:14px;margin:0 6px 6px 0;font-weight:600}.pchip small{background:var(--g2);color:#fff;border-radius:99px;padding:0 7px;font-size:11px;margin-left:3px}.hpl{display:flex;flex-wrap:wrap}
 .hwarn{background:#fef3c7;color:#78350f;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}a.pn{color:var(--g);font-weight:700;text-decoration:underline;cursor:pointer}
 .pst{background:#f3f8f0;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:14px}.spark{width:100%;height:auto;display:block;margin-top:4px;background:#f8fbf6;border-radius:10px}button.del{color:var(--red)}
-.hro td.cell{cursor:default}.solo{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #22c55e;padding:10px 12px}.solo button{flex:0 0 auto;width:auto}.solosum{margin-top:10px}.solosum table{font-size:14px}.solosum td,.solosum th{padding:5px 4px}.solosum .big{font-size:18px;font-weight:800;color:var(--g)}.rchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.rchips button{background:#e3efe0;color:var(--g);padding:6px 12px;border-radius:99px;font-size:14px}.rchips button.on{background:var(--g2);color:#fff}input[type=search]{width:100%}
+.hro td.cell{cursor:default}.solo{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #22c55e;padding:10px 12px}.solo button{flex:0 0 auto;width:auto}.solosum{margin-top:10px}.solosum table{font-size:14px}.solosum td,.solosum th{padding:5px 4px}.solosum .big{font-size:18px;font-weight:800;color:var(--g)}.rchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.rchips button{background:#e3efe0;color:var(--g);padding:6px 12px;border-radius:99px;font-size:14px}.rchips button.on{background:var(--g2);color:#fff}input[type=search]{width:100%}.gact{flex-wrap:wrap}.gact .btns{flex-wrap:wrap}.rlnote{background:#eff6ff;border:2px solid #3b82f6;border-radius:12px;padding:10px 12px;margin:6px 0;font-size:14px}.rlnote .bigcode{letter-spacing:6px;margin:8px 0}.rlask{background:#f1f6ee;border-radius:10px;padding:8px 10px;margin:0 0 10px}.rljoin{text-align:right;margin:-4px 0 8px}.rljoin button{width:auto}.codein{font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:4px}
 </style></head><body>
 <header><svg id="logo" onclick="logoTap()" style="cursor:pointer" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 21V3l10 4-10 4"/><ellipse cx="10" cy="21" rx="7" ry="1.5"/></svg><h1>TeeDraw</h1><button class="sug" onclick="sugOpen()" aria-label="Suggest a feature" title="Suggest a feature">💡</button><button class="hsv" onclick="saveRound()" aria-label="Save round to History">💾 Save</button><button class="pro" onclick="proInfo()">PRO soon</button></header>
 <div id="grpbar"></div>
 <div id="inst" class="hidden"></div>
 <main>
-<div id="grpact"></div>
+<div id="grpact"></div><div id="rlj" class="rljoin"><button class="sec sm" id="rljoinbtn" onclick="rlCodeForm()">🔗 Join round with code</button></div>
 <div class="card hidden" id="nearby"></div>
 <!-- PLAYERS -->
 <section id="v-players">
@@ -1314,7 +1314,7 @@ function handleRoute(){const r=shareRoute(location.hash);if(!r)return;history.re
  if(r.t==='round'){openRound(r.id,r.k)}}
 addEventListener('hashchange',()=>{if(shareRoute(location.hash))handleRoute()});
 // -- suggest a feature (queued offline, sent through te_submit_suggestion; needs supabase-share.sql) --
-const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v18',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
+const SUGQ='teedraw.sugq',SUGT='teedraw.sugt',SUGD='teedraw.dev',APPV='v19',SUG_CAT=[['feature','💡 Feature idea'],['bug','🐞 Something’s broken'],['course','⛳ Course / scorecard'],['other','💬 Other']];
 const sugGet=()=>jget(SUGQ,[]).filter(x=>x&&x.text&&Date.now()-(x.t||0)<30*864e5);
 const sugSet=a=>jset(SUGQ,a);
 function devId(){let d=localStorage.getItem(SUGD);if(!d){d=rid(16);localStorage.setItem(SUGD,d)}return d}
@@ -1441,7 +1441,7 @@ function renderGB(){const el=$('grpbar');if(!el)return;const g=gCur();
  el.innerHTML=g?`<button class="gchip" onclick="gMenu()" aria-label="Switch group">👥 ${esc(g.name)}${G.list.length>1?' ▾':''}</button><span class="gsub">${g.out?'signed out':(g.pl||[]).length+' players'}</span>`
   :`<button class="gchip" onclick="${G.list.length?'gMenu()':"gForm('join')"}">👥 ${G.list.length?'My own list ▾':'Sign in to a group'}</button>`;
  const a=$('grpact');if(!a)return;const rs=g&&!g.out?(g.rounds||[]):[];
- a.innerHTML=rs.map(r=>{const mine=S.ev&&S.ev.id===r.i;return`<div class="gact"><div><b>🟢 Active round</b> · ${esc(r.n||'Round')}<br><small>${r.by?'started by '+esc(r.by)+' · ':''}${r.t?new Date(r.t*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}${mine?' · you’re in it':''}</small></div><div class="btns" style="margin:0">${mine?`<button class="sm" onclick="setTab('score')">Score</button>`:`<button class="sm" onclick="gOpen('${r.i}')">Open</button>`}<button class="sec sm" onclick="gEnd('${r.i}')">Finish</button></div></div>`}).join('');
+ a.innerHTML=rs.map(r=>{const mine=S.ev&&S.ev.id===r.i;return`<div class="gact"><div><b>🟢 Active round</b> · ${esc(r.n||'Round')}<br><small>${r.by?'started by '+esc(r.by)+' · ':''}${r.t?new Date(r.t*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}${mine?' · you’re in it':''}</small></div><div class="btns" style="margin:0">${mine?`<button class="sm" onclick="setTab('score')">Score</button>`:`<button class="sm" onclick="gOpen('${r.i}')">Open</button>`}<button class="wa sm" onclick="rlShare('${r.i}')" aria-label="Share round on WhatsApp">📲 Share round on WhatsApp</button><button class="sec sm" onclick="gEnd('${r.i}')">Finish</button></div></div>`}).join('');if(window.rlBar)rlBar(a,rs);
  const sb=$('gstart');if(sb){const show=g&&!g.out&&S.groups&&S.groups.length&&!(S.ev&&rs.some(r=>r.i===S.ev.id));sb.classList.toggle('hidden',!show);if(show)sb.textContent='▶ Start round for '+g.name}}
 window.gOpen=i=>{const g=gCur(),r=g&&(g.rounds||[]).find(x=>x.i===i);if(r){track('group_round_open',{});openRound(r.i,r.k)}};
 window.gEnd=async i=>{const g=gCur();if(!g||!confirm('Finish this round for everyone in '+g.name+'? It drops off the active list (scores stay saved).'))return;
@@ -1459,8 +1459,75 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)gPull()});
 const _rd=renderDraw;renderDraw=function(){_rd.apply(this,arguments);renderGB()};
 const _st=setTab;setTab=function(){_st.apply(this,arguments);renderGB()};window.setTab=setTab;
 const _rp=renderPlayers;renderPlayers=function(){_rp.apply(this,arguments);renderGB()};
-window.TDG={get G(){return G},pull:gPull,push:gPush,render:renderGB};
+window.TDG={get G(){return G},get cur(){return gCur()},pull:gPull,push:gPush,render:renderGB};
 renderGB();gTimer();if(G.cur)setTimeout(()=>gPull(),300)})();
+
+// ===== v19 round links: share ONE active round (WhatsApp link ?r=TOKEN or 6-char code). Needs supabase-roundlink.sql =====
+(()=>{const RKEY='teedraw.rlinks',MEK='teedraw.rl.me',now=()=>Date.now()/1000;
+const rlGet=()=>{try{const a=JSON.parse(localStorage.getItem(RKEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&x.tok&&(!x.exp||x.exp>now())):[]}catch(e){return[]}};
+const rlSet=a=>{try{localStorage.setItem(RKEY,JSON.stringify(a))}catch(e){}};
+const rlPut=o=>{const a=rlGet().filter(x=>x.i!==o.i);a.push(o);rlSet(a.slice(-10))};
+const isIOS=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const rlErr=e=>e&&e.kind==='missing'?'Round links need a one-time setup on the server (supabase-roundlink.sql)':e&&e.kind==='net'?'No connection – try again when you have signal':e&&e.kind==='later'||/rate limited/.test(e&&e.message||'')?'Too many tries – wait a minute':/not active/.test(e&&e.message||'')?'That round has already finished':'Could not do that – '+((e&&e.message)||'error');
+const linkURL=t=>location.origin+location.pathname.replace(/index\.html$/,'')+'?r='+t;
+window.rlParse=(t,strict)=>{t=String(t||'');let m;if(strict){m=t.match(/code[:\s]+([A-HJ-NP-Z2-9]{6})\b/i)||t.trim().match(/^([A-HJ-NP-Z2-9]{6})$/i);if(m)return m[1].toUpperCase();m=t.match(/[?&#]r=([a-z0-9]{20})\b/);return m?m[1]:''}
+ m=t.match(/[?&#]r=([a-z0-9]{20})\b/);if(m)return m[1];m=t.match(/(?:^|[^a-z0-9])([a-z0-9]{20})(?:$|[^a-z0-9])/);if(m&&/\d/.test(m[1]))return m[1];
+ m=t.toUpperCase().replace(/(\b[A-Z2-9]{3})[\s-]([A-Z2-9]{3}\b)/,'$1$2').match(/(?:^|[^A-Z0-9])([A-HJ-NP-Z2-9]{6})(?:$|[^A-Z0-9])/);return m?m[1]:''};
+// ---- share (group member or someone who got the link) ----
+window.rlShare=async i=>{const g=TDG.cur;let L=rlGet().find(x=>x.i===i);
+ if(g&&(g.rounds||[]).some(r=>r.i===i)){try{const o=await TDC.rpc('te_rl_make',{p_id:g.id,p_key:g.key,p_ev:i});const r=g.rounds.find(r=>r.i===i);L=Object.assign({},L||{},{tok:o.tok,code:o.code,exp:o.exp,i,k:r.k,n:r.n,by:r.by,own:1});rlPut(L)}catch(e){toast(rlErr(e),3600);return}}
+ if(!L){toast('This round can’t be shared from here');return}
+ const url=linkURL(L.tok),text=`⛳ Join our TeeDraw round${L.n?' – '+L.n:''}\nTap to open the draw and live scorecard (no sign-in):\n${url}\nIn the TeeDraw app: Join round → code ${L.code}`;
+ track('roundlink_shared',{});
+ if(navigator.share&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({title:'TeeDraw round',text});return}catch(e){if(e&&e.name==='AbortError')return}}
+ wa(text)};
+// ---- join by token/code ----
+let _last='';
+window.rlJoin=async(t,via)=>{t=rlParse(t)||t;if(!t)return toast('That round code looks wrong');if(!LIVE)return toast('Live sharing isn’t set up in this copy');
+ let o;try{o=await TDC.rpc('te_rl_open',{p_tok:t})}catch(e){toast(rlErr(e),3600);return false}
+ if(!o||!o.i){toast('That round has finished or the link has expired',3600);return false}
+ const L={tok:/^[a-z0-9]{20}$/.test(t)?t:(rlGet().find(x=>x.i===o.i)||{}).tok||t,code:o.code,exp:o.exp,i:o.i,k:o.k,n:o.n,by:o.by,via};rlPut(L);mdlClose();track('roundlink_join',{via});
+ if(S.ev&&S.ev.id===o.i){setTab('score');rlNote(L);return true}
+ openRound(o.i,o.k);if(JOIN)JOIN.rl=L;return true};
+function rlNote(L){if(isSA()||!L||!L.code)return;mdl(`<h2>You’re in 🎉</h2><div class="mut">This round is open here in the browser.</div>${rlNoteHTML(L)}<div class="btns"><button onclick="mdlClose()">Got it</button></div>`)}
+function rlNoteHTML(L){return`<div class="rlnote" id="rlnote"><b>📱 Using the TeeDraw app on your home screen?</b><div>Open it and tap <b>Join round</b>, then enter code</div><div class="bigcode" id="rlcode">${esc(L.code)}</div><button class="sec wide" onclick="rlCopy('${esc(L.code)}')">Copy code</button>${isIOS()?'<div class="mut" style="margin-top:4px">iPhone opens WhatsApp links in Safari, and the home-screen app keeps its own data – so the code is how you get this round into the app.</div>':''}</div>`}
+window.rlCopy=async c=>toast(await copyText(c)?'Code copied':'Code: '+c,2400);
+// auto-join step on the event screen: name only if needed
+const _re=renderEvent;renderEvent=function(){_re.apply(this,arguments);if(!JOIN||!JOIN.rl)return;const el=$('evb'),o=JOIN.o;if(!o||typeof o!=='object'){if(!isSA()&&el)el.insertAdjacentHTML('afterbegin','<div class="card">'+rlNoteHTML(JOIN.rl)+'</div>');return}
+ const d=o.meta.d||0,ks=groupKeys(o,d),me=(localStorage.getItem(MEK)||(TDG.G&&TDG.G.me)||'').trim().toLowerCase();
+ if(!JOIN.tried){JOIN.tried=1;const k=me&&ks.find(k=>(o.groups[k].p||[]).some(p=>p.toLowerCase()===me));if(k){const L=JOIN.rl;evJoin(k);rlNote(L);renderGB2();return}}
+ const c=el&&el.querySelector('.card');if(!c)return;
+ c.insertAdjacentHTML('afterbegin',`<div class="rlask"><b>🔗 Round shared with you${JOIN.rl.by?' by '+esc(JOIN.rl.by):''}</b><label for="rl-me">Your name (as in the draw)</label><div class="row" style="gap:6px"><input id="rl-me" maxlength="40" autocomplete="name" value="${esc(localStorage.getItem(MEK)||'')}"><button class="sm" style="flex:0 0 auto;width:auto" onclick="rlMe()">Find me</button></div><div id="rl-msg" class="mut" role="alert"></div></div>`);
+ if(!isSA())el.insertAdjacentHTML('afterbegin','<div class="card">'+rlNoteHTML(JOIN.rl)+'</div>')};window.renderEvent=renderEvent;
+window.rlMe=()=>{const v=shName($('rl-me').value),o=JOIN&&JOIN.o;if(!v||!o)return;try{localStorage.setItem(MEK,v)}catch(e){}const ks=groupKeys(o,o.meta.d||0),k=ks.find(k=>(o.groups[k].p||[]).some(p=>p.toLowerCase()===v.toLowerCase()));
+ if(!k){$('rl-msg').textContent=v+' isn’t in the draw – tap your group below, or Just follow';return}const L=JOIN.rl;evJoin(k);rlNote(L);renderGB2()};
+// ---- Join round with code screen ----
+window.rlCodeForm=async pre=>{mdl(`<h2>🔗 Join round with code</h2><div class="mut">Enter the 6-character code from the WhatsApp message (or paste the round link). No sign-in needed.</div>
+ <label for="rl-code">Round code</label><input id="rl-code" class="codein" maxlength="80" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="e.g. K7QM3P" value="${esc(pre||'')}">
+ <div class="btns"><button id="rl-go" onclick="rlGo()">Join round</button><button class="sec" onclick="rlPaste()">📋 Paste</button><button class="sec" onclick="mdlClose()">Cancel</button></div><div id="rl-cmsg" class="mut" role="alert"></div>`);
+ const f=$('rl-code');f.addEventListener('keydown',e=>{if(e.key==='Enter')rlGo()});f.addEventListener('input',()=>{$('rl-cmsg').textContent=''});
+ if(!pre&&isSA())await rlPaste(true);else f.focus()};
+window.rlPaste=async quiet=>{let t='';try{t=await navigator.clipboard.readText()}catch(e){}const c=rlParse(t,1);const f=$('rl-code');if(!f)return;
+ if(c){f.value=/^[a-z0-9]{20}$/.test(c)?linkURL(c):c;$('rl-cmsg').textContent='Filled in from your clipboard'}else if(!quiet)$('rl-cmsg').textContent='No TeeDraw round code on the clipboard';f.focus()};
+window.rlGo=async()=>{const c=rlParse($('rl-code').value);if(!c){$('rl-cmsg').textContent='Enter the 6-character code, e.g. K7QM3P';$('rl-cmsg').style.color='#b91c1c';return}
+ const b=$('rl-go');b.disabled=true;b.textContent='…';const r=await rlJoin(c,'code');if(r===false&&$('rl-go')){b.disabled=false;b.textContent='Join round';$('rl-cmsg').textContent='Round not found – it may have finished, or check the code';$('rl-cmsg').style.color='#b91c1c'}};
+// ---- banner for rounds joined by link (shown even when not signed in to the group) ----
+function renderGB2(){TDG.render()}
+window.rlBar=(a,rs)=>{const ids=new Set((rs||[]).map(r=>r.i)),L=rlGet().filter(x=>!ids.has(x.i));
+ a.insertAdjacentHTML('beforeend',L.map(x=>{const mine=S.ev&&S.ev.id===x.i;return`<div class="gact rl"><div><b>🟢 Active round</b> · ${esc(x.n||'Round')}<br><small>joined by ${x.via==='code'?'code':'link'}${x.by?' · started by '+esc(x.by):''}${mine?' · you’re in it':''}${!isSA()&&x.code?' · app code <b>'+esc(x.code)+'</b>':''}</small></div><div class="btns" style="margin:0">${mine?`<button class="sm" onclick="setTab('score')">Score</button>`:`<button class="sm" onclick="rlOpen('${x.i}')">Open</button>`}<button class="wa sm" onclick="rlShare('${x.i}')">📲 Share round on WhatsApp</button><button class="sec sm" onclick="rlForget('${x.i}')" aria-label="Remove">✕</button></div></div>`}).join(''))};
+window.rlOpen=i=>{const x=rlGet().find(x=>x.i===i);if(x){openRound(x.i,x.k);if(JOIN)JOIN.rl=Object.assign({},x),JOIN.tried=0}};
+window.rlForget=i=>{rlSet(rlGet().filter(x=>x.i!==i));renderGB2()};
+// re-check saved link rounds: drop them when the round is finished or the link expired
+async function rlCheck(){const a=rlGet();if(!a.length||!LIVE||!navigator.onLine)return;let ch=0;
+ for(const x of a){try{const o=await TDC.rpc('te_rl_open',{p_tok:x.tok});if(!o||!o.i){rlSet(rlGet().filter(y=>y.i!==x.i));ch=1;if(S.ev&&S.ev.id===x.i)toast('“'+(x.n||'Round')+'” has finished',3200)}}catch(e){}}
+ if(ch)renderGB2()}
+window.TDRL={sa:()=>isSA(),get:rlGet,check:rlCheck,parse:rlParse};
+setInterval(()=>{if(!document.hidden)rlCheck()},window.TDG_POLL||20000);
+// ---- launch: read ?r= (WhatsApp link, Android link capturing / launch_handler) ----
+function rlLaunch(u){let t='';try{t=new URL(u,location.href).searchParams.get('r')||''}catch(e){}if(!t||t===_last)return;_last=t;
+ try{const q=new URL(location.href);if(q.searchParams.has('r')){q.searchParams.delete('r');history.replaceState(null,'',q.pathname+q.search+q.hash)}}catch(e){}rlJoin(t,'link')}
+if('launchQueue' in window)try{launchQueue.setConsumer(p=>{if(p&&p.targetURL)rlLaunch(p.targetURL)})}catch(e){}
+renderGB2();rlLaunch(location.href);setTimeout(rlCheck,1500)})();
 
 }
 </script><div id="mdl" class="mdl hidden" onclick="if(event.target===this)mdlClose()"></div></body></html>
